@@ -1,0 +1,44 @@
+@if (product) {
+  <div class="product-detail-container">
+    <div class="header-actions">
+      <button mat-flat-button color="primary" (click)="openEditDialog()">Update</button>
+    </div>
+    <h2 class="product-title">{{ product.name }}</h2>
+
+    <mat-card class="product-main-card">
+      <div class="product-main">
+        <div class="product-image-carousel">
+          <img
+            *ngFor="let img of product.images"
+            class="product-image"
+            [src]="img"
+            [alt]="product.name"
+          />
+        </div>
+
+
+        <div class="product-info">
+          <div class="price-section">
+            <span class="price">{{ product.price }}</span>
+            @if (product.originalPrice > product.price) {
+              <span class="original-price">{{ product.originalPrice }}</span>
+            }
+          </div>
+        </div>
+      </div>
+    </mat-card>
+
+    <div class="product-details">
+      @for (item of product.details; track item.title) {
+        <mat-card class="detail-card">
+          <mat-card-title>{{ item.title }}</mat-card-title>
+          <mat-card-content>
+            <p>{{ item.content }}</p>
+          </mat-card-content>
+        </mat-card>
+      }
+    </div>
+  </div>
+} @else {
+  <p>Loading...</p>
+}

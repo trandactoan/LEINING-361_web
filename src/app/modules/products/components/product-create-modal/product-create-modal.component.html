@@ -1,0 +1,65 @@
+<!-- product-create-modal.component.html -->
+<h2 mat-dialog-title>Create Product</h2>
+<mat-dialog-content>
+    <mat-form-field appearance="fill" class="full-width">
+      <mat-label>Name</mat-label>
+      <input matInput [(ngModel)]="newProduct.name">
+    </mat-form-field>
+
+    <mat-form-field appearance="fill" class="full-width">
+      <mat-label>Price</mat-label>
+      <input matInput type="number" [(ngModel)]="newProduct.price">
+    </mat-form-field>
+
+    <mat-form-field appearance="fill" class="full-width">
+      <mat-label>Original Price</mat-label>
+      <input matInput type="number" [(ngModel)]="newProduct.originalPrice">
+    </mat-form-field>
+    
+    <mat-form-field appearance="fill" class="full-width">
+        <mat-label>Category</mat-label>
+        <mat-select [(ngModel)]="newProduct.categoryId">
+            <mat-option *ngFor="let category of categories" [value]="category.id">
+            {{ category.name }}
+            </mat-option>
+        </mat-select>
+    </mat-form-field>
+
+    <div class="full-width">
+      <label for="imageUpload">Upload Images</label>
+      <input type="file" id="imageUpload" multiple (change)="onImagesSelected($event)" accept="image/*" />
+    </div>
+
+    <div *ngIf="imagePreviews.length > 0" class="image-preview-container">
+      <p>Previews:</p>
+      <div class="image-preview" *ngFor="let preview of imagePreviews">
+        <img [src]="preview" alt="Preview" width="100" />
+      </div>
+    </div>
+
+
+    <div formArrayName="details">
+        <div *ngFor="let detail of newProduct.details; let i = index" class="detail-item">
+            <mat-form-field class="full-width">
+            <mat-label>Detail Title</mat-label>
+            <input matInput [(ngModel)]="newProduct.details[i].title" name="title-{{i}}">
+            </mat-form-field>
+
+            <mat-form-field class="full-width">
+            <mat-label>Detail Content</mat-label>
+            <textarea matInput [(ngModel)]="newProduct.details[i].content" name="content-{{i}}"></textarea>
+            </mat-form-field>
+
+            <button mat-icon-button color="warn" (click)="removeDetail(i)">
+            <mat-icon>delete</mat-icon>
+            </button>
+        </div>
+    </div>
+
+    <!-- Add new detail button -->
+    <button mat-stroked-button color="primary" (click)="addDetail()">Add Detail</button>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()">Cancel</button>
+  <button mat-raised-button color="primary" (click)="create()">Create</button>
+</mat-dialog-actions>

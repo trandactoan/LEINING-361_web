@@ -1,0 +1,51 @@
+<div>
+    <button matButton="outlined" (click)="onCreate()">New Product</button>
+    <div class="mat-elevation-z8">
+    <table mat-table [dataSource]="dataSource">
+        <!-- Id Column -->
+        <ng-container matColumnDef="id">
+        <th mat-header-cell *matHeaderCellDef> Id </th>
+            <td mat-cell *matCellDef="let element"
+                class="on-hover"
+                [routerLink]="['/products', element.id]" routerLinkActive="active"> <a>{{element.id}}</a>  </td>
+        </ng-container>
+
+        <!-- Name Column -->
+        <ng-container matColumnDef="name">
+        <th mat-header-cell *matHeaderCellDef> Name </th>
+        <td mat-cell *matCellDef="let element"> {{element.name}} </td>
+        </ng-container>
+
+        <!-- Price Column -->
+        <ng-container matColumnDef="price">
+        <th mat-header-cell *matHeaderCellDef> Price </th>
+        <td mat-cell *matCellDef="let element"> {{element.price}} </td>
+        </ng-container>
+
+        <!-- Action Column -->
+        <ng-container matColumnDef="action">
+            <th mat-header-cell *matHeaderCellDef> Action </th>
+            <td mat-cell *matCellDef="let element"> 
+                <button mat-icon-button color="primary" (click)="onEdit(element)">
+                    <mat-icon>edit</mat-icon>
+                </button>
+                <button mat-icon-button color="warn" (click)="onDelete(element)">
+                    <mat-icon>delete</mat-icon>
+                </button> 
+            </td>
+        </ng-container>
+        
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row
+            *matRowDef="let row; columns: displayedColumns;"
+            class="hover-row"
+            ></tr>
+    </table>
+
+    <mat-paginator [pageSizeOptions]="[5, 10, 20]"
+                    showFirstLastButtons
+                    aria-label="Select page of periodic elements">
+    </mat-paginator>
+    </div>
+</div>

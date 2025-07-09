@@ -1,0 +1,69 @@
+<!-- api-configuration.component.html -->
+<div class="form-container">
+  <h2>API Configuration</h2>
+  <p class="subtext">Configure your message template and recipient details</p>
+
+  <!-- Phone Number & Template ID -->
+  <div class="form-row">
+    <mat-form-field appearance="fill" class="half-width">
+      <mat-label>Phone Number</mat-label>
+      <input matInput [(ngModel)]="templateData.phone" name="phone" />
+    </mat-form-field>
+
+    <mat-form-field appearance="fill" class="half-width">
+      <mat-label>Template ID</mat-label>
+      <input matInput [(ngModel)]="templateData.templateId" name="templateId" />
+    </mat-form-field>
+  </div>
+
+  <h3>Template Data</h3>
+
+  <!-- Template Data Fields -->
+  <div class="form-row">
+    <mat-form-field appearance="fill" class="half-width">
+      <mat-label>Order Code</mat-label>
+      <input matInput [(ngModel)]="templateData.orderCode" name="orderCode" />
+    </mat-form-field>
+
+    <mat-form-field appearance="fill" class="half-width">
+      <mat-label>Phone Number (Template)</mat-label>
+      <input matInput [(ngModel)]="templateData.templatePhone" name="templatePhone" />
+    </mat-form-field>
+  </div>
+
+  <div class="form-row">
+    <mat-form-field appearance="fill" class="half-width">
+      <mat-label>Price</mat-label>
+      <input matInput [(ngModel)]="templateData.price" name="price" />
+    </mat-form-field>
+
+    <mat-form-field appearance="fill" class="half-width">
+      <mat-label>Status</mat-label>
+      <input matInput [(ngModel)]="templateData.status" name="status" />
+    </mat-form-field>
+  </div>
+
+  <div class="form-row">
+    <mat-form-field appearance="fill" class="half-width">
+      <mat-label>Date</mat-label>
+      <input matInput [(ngModel)]="templateData.date" name="date" />
+    </mat-form-field>
+
+    <mat-form-field appearance="fill" class="half-width">
+      <mat-label>Name</mat-label>
+      <input matInput [(ngModel)]="templateData.name" name="name" />
+    </mat-form-field>
+  </div>
+
+  <!-- Tracking ID -->
+  <mat-form-field appearance="fill" class="full-width">
+    <mat-label>Tracking ID</mat-label>
+    <input matInput [(ngModel)]="templateData.trackingId" name="trackingId" />
+  </mat-form-field>
+
+  <!-- Submit Button -->
+  <button mat-raised-button color="primary" class="send-btn" (click)="sendApi()">
+    <mat-icon>send</mat-icon>
+    &nbsp;Send Message
+  </button>
+</div>

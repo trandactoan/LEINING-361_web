@@ -1,0 +1,75 @@
+<div class="edit-modal-container">
+  <h2 mat-dialog-title>{{editedProduct.name}}</h2>
+  <mat-dialog-content>
+    <mat-form-field appearance="fill" class="full-width">
+      <mat-label>Name</mat-label>
+      <input matInput [(ngModel)]="editedProduct.name">
+    </mat-form-field>
+
+    <mat-form-field appearance="fill" class="full-width">
+      <mat-label>Price</mat-label>
+      <input matInput type="number" [(ngModel)]="editedProduct.price">
+    </mat-form-field>
+
+    <mat-form-field appearance="fill" class="full-width">
+      <mat-label>Original Price</mat-label>
+      <input matInput type="number" [(ngModel)]="editedProduct.originalPrice">
+    </mat-form-field>
+
+    <div class="full-width">
+      <label for="imageUpload">Upload Images</label>
+      <input type="file" id="imageUpload" multiple (change)="onImagesSelected($event)" accept="image/*" />
+    </div>
+
+    <!-- Unified preview -->
+    <div *ngIf="imagePreviews.length > 0" class="image-preview-container">
+      <p>Image Previews:</p>
+      <div class="image-preview" *ngFor="let img of imagePreviews; let i = index">
+        <img [src]="img.previewUrl" alt="Image" width="100" />
+        <button mat-icon-button color="warn" (click)="removeImage(i)">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </div>
+    </div>
+
+
+
+    <mat-form-field appearance="fill" class="full-width">
+        <mat-label>Category</mat-label>
+        <mat-select [(ngModel)]="editedProduct.categoryId">
+            <mat-option *ngFor="let category of categories" [value]="category.id">
+            {{ category.name }}
+            </mat-option>
+        </mat-select>
+    </mat-form-field>
+
+    
+    <div formArrayName="details">
+        <div *ngFor="let detail of editedProduct.details; let i = index" class="detail-item">
+            <mat-form-field class="full-width">
+            <mat-label>Detail Title</mat-label>
+            <input matInput [(ngModel)]="editedProduct.details[i].title" name="title-{{i}}">
+            </mat-form-field>
+
+            <mat-form-field class="full-width">
+            <mat-label>Detail Content</mat-label>
+            <textarea matInput [(ngModel)]="editedProduct.details[i].content" name="content-{{i}}"></textarea>
+            </mat-form-field>
+
+            <button mat-icon-button color="warn" (click)="removeDetail(i)">
+            <mat-icon>delete</mat-icon>
+            </button>
+        </div>
+    </div>
+
+    
+    <!-- Add new detail button -->
+    <button mat-stroked-button color="primary" (click)="addDetail()">Add Detail</button>
+
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button (click)="cancel()">Cancel</button>
+    <button mat-raised-button color="primary" (click)="save()">Save</button>
+  </mat-dialog-actions>
+</div>
