@@ -59,9 +59,14 @@ export class ProductEditModalComponent {
         console.error('Update failed', err);
       }
     });
+    this.deleteImage.forEach((imageName) => {
+      this.imageService.removeImage(imageName).subscribe();
+    });
+    this.deleteImage = [];
   }
 
   cancel(): void {  
+    this.deleteImage = [];
     this.dialogRef.close();
   }
 
@@ -74,6 +79,7 @@ export class ProductEditModalComponent {
   }
 
   imagePreviews: { previewUrl: string; file?: File; isNew: boolean }[] = [];
+  deleteImage: string[] = [];
 
   onImagesSelected(event: Event) {
     const input = event.target as HTMLInputElement;
@@ -96,8 +102,19 @@ export class ProductEditModalComponent {
   }
   removeImage(index: number){
     var name = this.editedProduct.images[index];
+    if(this.imagePreviews[index].isNew == true){
+      this.editedProduct.images.splice(index, 1);
+      this.imageService.removeImage(name).subscribe();
+    } else {
+      this.deleteImage.push(name);
+    }
     this.imagePreviews.splice(index, 1);
-    this.editedProduct.images.splice(index, 1);
-    this.imageService.removeImage(name).subscribe();
+  }
+    addColor() {
+    this.editedProduct.colors.push({ name: '', hex: '' });
+  }
+
+  removeColor(index: number) {
+    this.editedProduct.colors.splice(index, 1);
   }
 }

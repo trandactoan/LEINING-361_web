@@ -1,30 +1,38 @@
 @if (product) {
   <div class="product-detail-container">
-    <div class="header-actions">
-      <button mat-flat-button color="primary" (click)="openEditDialog()">Update</button>
+    <div class="header-bar">
+      <h2 class="product-title">{{ product.name }}</h2>
+      <button mat-flat-button color="primary" (click)="openEditDialog()">
+        <mat-icon>edit</mat-icon>
+        Update
+      </button>
     </div>
-    <h2 class="product-title">{{ product.name }}</h2>
 
     <mat-card class="product-main-card">
       <div class="product-main">
+
+        <!-- Image Carousel on the Left -->
         <div class="product-image-carousel">
-          <img
-            *ngFor="let img of product.images"
-            class="product-image"
-            [src]="img"
-            [alt]="product.name"
-          />
+          <div class="carousel-track">
+            <img
+              *ngFor="let img of product.images"
+              class="product-image"
+              [src]="img"
+              [alt]="product.name"
+            />
+          </div>
         </div>
 
-
+        <!-- Price/Info on the Right -->
         <div class="product-info">
           <div class="price-section">
-            <span class="price">{{ product.price }}</span>
+            <span class="price">{{ product.price | currency }}</span>
             @if (product.originalPrice > product.price) {
-              <span class="original-price">{{ product.originalPrice }}</span>
+              <span class="original-price">{{ product.originalPrice | currency }}</span>
             }
           </div>
         </div>
+
       </div>
     </mat-card>
 

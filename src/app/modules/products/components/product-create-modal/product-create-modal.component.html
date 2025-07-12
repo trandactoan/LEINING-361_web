@@ -1,63 +1,98 @@
 <!-- product-create-modal.component.html -->
 <h2 mat-dialog-title>Create Product</h2>
 <mat-dialog-content>
-    <mat-form-field appearance="fill" class="full-width">
+  <h3>Description and price</h3>
+  <!-- Row 1: Name & Price -->
+  <div class="form-row">
+    <mat-form-field appearance="fill" class="form-field">
       <mat-label>Name</mat-label>
-      <input matInput [(ngModel)]="newProduct.name">
+      <input matInput [(ngModel)]="newProduct.name" />
     </mat-form-field>
 
-    <mat-form-field appearance="fill" class="full-width">
+    <mat-form-field appearance="fill" class="form-field">
       <mat-label>Price</mat-label>
-      <input matInput type="number" [(ngModel)]="newProduct.price">
+      <input matInput type="number" [(ngModel)]="newProduct.price" />
     </mat-form-field>
-
-    <mat-form-field appearance="fill" class="full-width">
+  </div>
+  
+  <!-- Row 2: Original Price & Category -->
+  <div class="form-row">
+    <mat-form-field appearance="fill" class="form-field">
       <mat-label>Original Price</mat-label>
-      <input matInput type="number" [(ngModel)]="newProduct.originalPrice">
+      <input matInput type="number" [(ngModel)]="newProduct.originalPrice" />
     </mat-form-field>
     
-    <mat-form-field appearance="fill" class="full-width">
-        <mat-label>Category</mat-label>
-        <mat-select [(ngModel)]="newProduct.categoryId">
-            <mat-option *ngFor="let category of categories" [value]="category.id">
-            {{ category.name }}
-            </mat-option>
-        </mat-select>
+    <mat-form-field appearance="fill" class="form-field">
+      <mat-label>Category</mat-label>
+      <mat-select [(ngModel)]="newProduct.categoryId">
+        <mat-option *ngFor="let category of categories" [value]="category.id">
+          {{ category.name }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  <h3>Details</h3>
+  <div formArrayName="details">
+    <div *ngFor="let detail of newProduct.details; let i = index" class="detail-item">
+        <mat-form-field class="full-width">
+        <mat-label>Detail Title</mat-label>
+        <input matInput [(ngModel)]="newProduct.details[i].title" name="title-{{i}}">
+        </mat-form-field>
+
+        <mat-form-field class="full-width">
+        <mat-label>Detail Content</mat-label>
+        <textarea matInput [(ngModel)]="newProduct.details[i].content" name="content-{{i}}"></textarea>
+        </mat-form-field>
+
+        <button mat-icon-button color="warn" (click)="removeDetail(i)">
+        <mat-icon>delete</mat-icon>
+        </button>
+    </div>
+  </div>
+
+  <!-- Add new detail button -->
+  <button mat-stroked-button color="primary" (click)="addDetail()">Add Detail</button>
+
+  <h3>Colors</h3>
+  <div *ngFor="let color of newProduct.colors; let i = index" class="form-row">
+    <mat-form-field appearance="fill" class="form-field">
+      <mat-label>Color Name</mat-label>
+      <input matInput [(ngModel)]="newProduct.colors[i].name" placeholder="e.g., Đỏ" />
     </mat-form-field>
 
-    <div class="full-width">
-      <label for="imageUpload">Upload Images</label>
-      <input type="file" id="imageUpload" multiple (change)="onImagesSelected($event)" accept="image/*" />
-    </div>
+    <mat-form-field appearance="fill" class="form-field">
+      <mat-label>Hex Code</mat-label>
+      <input matInput [(ngModel)]="newProduct.colors[i].hex" placeholder="#FFC7C7" />
+    </mat-form-field>
 
-    <div *ngIf="imagePreviews.length > 0" class="image-preview-container">
-      <p>Previews:</p>
-      <div class="image-preview" *ngFor="let preview of imagePreviews">
+    <button mat-icon-button color="warn" (click)="removeColor(i)">
+      <mat-icon>delete</mat-icon>
+    </button>
+  </div>
+
+  <!-- Add new color button -->
+  <button mat-stroked-button color="primary" (click)="addColor()">Add Color</button>
+
+
+  <h3>Images</h3>
+  <div class="full-width">
+    <label for="imageUpload">Upload Images</label>
+    <input type="file" id="imageUpload" multiple (change)="onImagesSelected($event)" accept="image/*" />
+  </div>
+
+  <div *ngIf="imagePreviews.length > 0" class="image-preview-container">
+    <p>Previews:</p>
+    <div class="image-preview" *ngFor="let preview of imagePreviews; let i = index">
+      <div class="image-box">
         <img [src]="preview" alt="Preview" width="100" />
+        <button mat-icon-button color="warn" class="delete-btn" (click)="removeImage(i)">
+          <mat-icon>delete</mat-icon>
+        </button>
       </div>
     </div>
+  </div>
 
-
-    <div formArrayName="details">
-        <div *ngFor="let detail of newProduct.details; let i = index" class="detail-item">
-            <mat-form-field class="full-width">
-            <mat-label>Detail Title</mat-label>
-            <input matInput [(ngModel)]="newProduct.details[i].title" name="title-{{i}}">
-            </mat-form-field>
-
-            <mat-form-field class="full-width">
-            <mat-label>Detail Content</mat-label>
-            <textarea matInput [(ngModel)]="newProduct.details[i].content" name="content-{{i}}"></textarea>
-            </mat-form-field>
-
-            <button mat-icon-button color="warn" (click)="removeDetail(i)">
-            <mat-icon>delete</mat-icon>
-            </button>
-        </div>
-    </div>
-
-    <!-- Add new detail button -->
-    <button mat-stroked-button color="primary" (click)="addDetail()">Add Detail</button>
 </mat-dialog-content>
 <mat-dialog-actions align="end">
   <button mat-button (click)="cancel()">Cancel</button>

@@ -3,3 +3,13 @@
   border-bottom: 1px solid #ccc;
   padding-bottom: 8px;
 }
+.form-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.form-field {
+  flex: 1;
+  min-width: 200px;
+}

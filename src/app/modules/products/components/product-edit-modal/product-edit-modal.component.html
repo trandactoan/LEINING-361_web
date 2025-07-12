@@ -1,49 +1,35 @@
 <div class="edit-modal-container">
   <h2 mat-dialog-title>{{editedProduct.name}}</h2>
   <mat-dialog-content>
-    <mat-form-field appearance="fill" class="full-width">
-      <mat-label>Name</mat-label>
-      <input matInput [(ngModel)]="editedProduct.name">
-    </mat-form-field>
+    <!-- Row 1: Name & Price -->
+    <div class="form-row">
+      <mat-form-field appearance="fill" class="form-field">
+        <mat-label>Name</mat-label>
+        <input matInput [(ngModel)]="editedProduct.name">
+      </mat-form-field>
 
-    <mat-form-field appearance="fill" class="full-width">
-      <mat-label>Price</mat-label>
-      <input matInput type="number" [(ngModel)]="editedProduct.price">
-    </mat-form-field>
-
-    <mat-form-field appearance="fill" class="full-width">
-      <mat-label>Original Price</mat-label>
-      <input matInput type="number" [(ngModel)]="editedProduct.originalPrice">
-    </mat-form-field>
-
-    <div class="full-width">
-      <label for="imageUpload">Upload Images</label>
-      <input type="file" id="imageUpload" multiple (change)="onImagesSelected($event)" accept="image/*" />
+      <mat-form-field appearance="fill" class="form-field">
+        <mat-label>Price</mat-label>
+        <input matInput type="number" [(ngModel)]="editedProduct.price">
+      </mat-form-field>
     </div>
 
-    <!-- Unified preview -->
-    <div *ngIf="imagePreviews.length > 0" class="image-preview-container">
-      <p>Image Previews:</p>
-      <div class="image-preview" *ngFor="let img of imagePreviews; let i = index">
-        <img [src]="img.previewUrl" alt="Image" width="100" />
-        <button mat-icon-button color="warn" (click)="removeImage(i)">
-          <mat-icon>delete</mat-icon>
-        </button>
-      </div>
-    </div>
+    <!-- Row 2: Original Price & Category -->
+    <div class="form-row">
+      <mat-form-field appearance="fill" class="form-field">
+        <mat-label>Original Price</mat-label>
+        <input matInput type="number" [(ngModel)]="editedProduct.originalPrice">
+      </mat-form-field>
 
-
-
-    <mat-form-field appearance="fill" class="full-width">
+      <mat-form-field appearance="fill" class="form-field">
         <mat-label>Category</mat-label>
         <mat-select [(ngModel)]="editedProduct.categoryId">
-            <mat-option *ngFor="let category of categories" [value]="category.id">
+          <mat-option *ngFor="let category of categories" [value]="category.id">
             {{ category.name }}
-            </mat-option>
+          </mat-option>
         </mat-select>
-    </mat-form-field>
-
-    
+      </mat-form-field>
+    </div>
     <div formArrayName="details">
         <div *ngFor="let detail of editedProduct.details; let i = index" class="detail-item">
             <mat-form-field class="full-width">
@@ -62,10 +48,43 @@
         </div>
     </div>
 
-    
     <!-- Add new detail button -->
     <button mat-stroked-button color="primary" (click)="addDetail()">Add Detail</button>
+        
+      <h3>Colors</h3>
+  <div *ngFor="let color of editedProduct.colors; let i = index" class="form-row">
+    <mat-form-field appearance="fill" class="form-field">
+      <mat-label>Color Name</mat-label>
+      <input matInput [(ngModel)]="editedProduct.colors[i].name" placeholder="e.g., Đỏ" />
+    </mat-form-field>
 
+    <mat-form-field appearance="fill" class="form-field">
+      <mat-label>Hex Code</mat-label>
+      <input matInput [(ngModel)]="editedProduct.colors[i].hex" placeholder="#FFC7C7" />
+    </mat-form-field>
+
+    <button mat-icon-button color="warn" (click)="removeColor(i)">
+      <mat-icon>delete</mat-icon>
+    </button>
+  </div>
+
+  <!-- Add new color button -->
+  <button mat-stroked-button color="primary" (click)="addColor()">Add Color</button>
+    <div class="full-width">
+      <label for="imageUpload">Upload Images</label>
+      <input type="file" id="imageUpload" multiple (change)="onImagesSelected($event)" accept="image/*" />
+    </div>
+
+    <!-- Unified preview -->
+    <div *ngIf="imagePreviews.length > 0" class="image-preview-container">
+      <p>Image Previews:</p>
+      <div class="image-preview" *ngFor="let img of imagePreviews; let i = index">
+        <img [src]="img.previewUrl" alt="Image" width="100" />
+        <button mat-icon-button color="warn" (click)="removeImage(i)">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </div>
+    </div>
   </mat-dialog-content>
 
   <mat-dialog-actions align="end">

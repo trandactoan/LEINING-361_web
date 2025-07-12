@@ -1,17 +1,22 @@
 <app-header />
-<!-- src/app/app.component.html -->
+
 <mat-sidenav-container class="dashboard-container">
+
+  <!-- Sidebar -->
   <mat-sidenav mode="side" opened class="dashboard-sidenav">
     <mat-nav-list>
-      <a mat-list-item [routerLink]="['/products']" routerLinkActive="active">Products</a>
-      <a mat-list-item [routerLink]="['/zns']" routerLinkActive="active">ZNS</a>
+      <a mat-list-item routerLink="/products" routerLinkActive="active-link">Products</a>
+      <a mat-list-item routerLink="/zns" routerLinkActive="active-link">ZNS</a>
     </mat-nav-list>
   </mat-sidenav>
 
+  <!-- Content -->
   <mat-sidenav-content class="dashboard-content">
     <div class="main-content">
       <router-outlet></router-outlet>
     </div>
   </mat-sidenav-content>
+
 </mat-sidenav-container>
+
 <app-footer />

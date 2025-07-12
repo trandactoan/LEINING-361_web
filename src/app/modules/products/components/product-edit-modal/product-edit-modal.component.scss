@@ -1,6 +1,40 @@
-.full-width {
-  width: 100%;
+:host ::ng-deep .form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 16px;
 }
-.edit-modal-container mat-form-field + mat-form-field {
-  margin-left: 8px;
+
+:host ::ng-deep .form-field {
+  flex: 1 1 200px;
+  min-width: 200px;
+}
+
+
+.image-preview-grid {
+  margin-top: 12px;
+}
+
+.image-preview-grid p {
+  margin-bottom: 8px;
+}
+
+.image-preview-box {
+  position: relative;
+  display: inline-block;
+  margin: 8px;
+}
+
+.image-preview-box img {
+  height: 100px;
+  width: auto;
+  border-radius: 4px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.image-preview-box button {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: white;
 }

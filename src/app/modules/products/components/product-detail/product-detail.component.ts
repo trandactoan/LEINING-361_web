@@ -11,11 +11,12 @@ import { MatCardModule } from '@angular/material/card';
 import { CommonModule } from '@angular/common';
 import { CategoryDetail } from '../../models/category-list.mode';
 import { CategoryService } from '../../services/category.service';
+import { MatIconModule } from '@angular/material/icon';
 
 @Component({
   selector: 'app-product-detail',
   standalone: true,
-  imports: [CommonModule, MatFormFieldModule, FormsModule, MatGridListModule, MatCardModule, ],
+  imports: [CommonModule, MatFormFieldModule, FormsModule, MatGridListModule, MatCardModule, MatIconModule ],
   templateUrl: './product-detail.component.html',
   styleUrl: './product-detail.component.scss',
   providers: [ProductService, CategoryService]

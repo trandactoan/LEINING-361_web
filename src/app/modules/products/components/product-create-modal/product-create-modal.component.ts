@@ -39,8 +39,8 @@ export class ProductCreateModalComponent {
       originalPrice: 0,
       images: [],
       details: [],
-      categoryId: ''
-      // add other required fields with defaults
+      categoryId: '',
+      colors: [],
     };
   
     constructor(
@@ -67,7 +67,13 @@ export class ProductCreateModalComponent {
     this.newProduct.details.splice(index, 1);
   }
 
+  addColor() {
+    this.newProduct.colors.push({ name: '', hex: '' });
+  }
 
+  removeColor(index: number) {
+    this.newProduct.colors.splice(index, 1);
+  }
 
  
   imagePreviews: string[] = [];
@@ -91,5 +97,11 @@ export class ProductCreateModalComponent {
       };
       reader.readAsDataURL(file);
     });
+  }
+  removeImage(index: number){
+    var name = this.newProduct.images[index];
+    this.imagePreviews.splice(index, 1);
+    this.newProduct.images.splice(index, 1);
+    this.imageService.removeImage(name).subscribe();
   }
 }
