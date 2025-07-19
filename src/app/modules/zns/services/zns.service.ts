@@ -11,6 +11,6 @@ export class ZnsService{
             phone: templateData.phone,
             templateId: templateData.templateId,
             templateData,
-        }).subscribe();
+        });
     }
 }
