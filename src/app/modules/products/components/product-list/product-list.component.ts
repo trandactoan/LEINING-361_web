@@ -85,9 +85,11 @@ export class ProductListComponent {
 
   onDelete(element: ProductListElement) {
     this.productService.deleteProduct(element.id).subscribe(_ => {
-      this.products = this.products.filter(product=>product.id != element.id);
-      this.dataSource.data = this.products;
-      this.dataSource.paginator = this.paginator; 
+      this.productService.getAll().subscribe(responseProducts => {
+        this.products = responseProducts;
+        this.dataSource.data = this.products;
+        this.dataSource.paginator = this.paginator;
+      });
     });
   }
 }
