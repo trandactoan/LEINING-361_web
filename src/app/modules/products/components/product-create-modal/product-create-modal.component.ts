@@ -41,6 +41,7 @@ export class ProductCreateModalComponent {
       details: [],
       categoryId: '',
       colors: [],
+      sizes: []
     };
   
     constructor(
@@ -103,5 +104,16 @@ export class ProductCreateModalComponent {
     this.imagePreviews.splice(index, 1);
     this.newProduct.images.splice(index, 1);
     this.imageService.removeImage(name).subscribe();
+  }  
+  addSize() {
+    this.newProduct.sizes.push('');
+  }
+
+  removeSize(index: number) {
+    this.newProduct.sizes.splice(index, 1);
+  }
+
+  trackByIndex(index: number, item: any): number {
+    return index;
   }
 }

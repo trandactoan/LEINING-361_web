@@ -6,7 +6,8 @@ export interface ProductDetail{
     images: string[],
     categoryId: string,
     details: DetailContent[],
-    colors: Color[]
+    colors: Color[],
+    sizes: string[]
 }
 export interface DetailContent{
     title: string,

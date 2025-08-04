@@ -36,6 +36,24 @@
       </div>
     </mat-card>
 
+
+    @if (product.sizes && product.sizes.length) {
+      <mat-card class="size-card">
+        <mat-card-title>Sizes</mat-card-title>
+        <mat-card-content>
+          <div class="size-list" style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button
+              mat-stroked-button
+              *ngFor="let size of product.sizes"
+              type="button"
+            >
+              {{ size }}
+            </button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    }
+    
     <div class="product-details">
       @for (item of product.details; track item.title) {
         <mat-card class="detail-card">

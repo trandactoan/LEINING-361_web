@@ -1,6 +1,7 @@
 <div class="edit-modal-container">
   <h2 mat-dialog-title>{{editedProduct.name}}</h2>
   <mat-dialog-content>
+    <h3>Description and price</h3>
     <!-- Row 1: Name & Price -->
     <div class="form-row">
       <mat-form-field appearance="fill" class="form-field">
@@ -30,6 +31,24 @@
         </mat-select>
       </mat-form-field>
     </div>
+
+  <h3>Sizes</h3>
+  <div formArrayName="sizes">
+    <div *ngFor="let size of editedProduct.sizes; let i = index;  trackBy: trackByIndex" class="size-item">
+      <mat-form-field  appearance="fill" class="full-width">
+        <mat-label>Size</mat-label>
+        <input matInput [(ngModel)]="editedProduct.sizes[i]" name="size-{{i}}">
+      </mat-form-field>
+      <button mat-icon-button color="warn" type="button" (click)="removeSize(i)">
+          <mat-icon>delete</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- Add new detail button -->
+  <button mat-stroked-button color="primary" (click)="addSize()">Add Size</button>                      
+
+    <h3>Details</h3>
     <div formArrayName="details">
         <div *ngFor="let detail of editedProduct.details; let i = index" class="detail-item">
             <mat-form-field class="full-width">
@@ -51,25 +70,26 @@
     <!-- Add new detail button -->
     <button mat-stroked-button color="primary" (click)="addDetail()">Add Detail</button>
         
-      <h3>Colors</h3>
-  <div *ngFor="let color of editedProduct.colors; let i = index" class="form-row">
-    <mat-form-field appearance="fill" class="form-field">
-      <mat-label>Color Name</mat-label>
-      <input matInput [(ngModel)]="editedProduct.colors[i].name" placeholder="e.g., Đỏ" />
-    </mat-form-field>
+    <h3>Colors</h3>
+    <div *ngFor="let color of editedProduct.colors; let i = index" class="form-row">
+      <mat-form-field appearance="fill" class="form-field">
+        <mat-label>Color Name</mat-label>
+        <input matInput [(ngModel)]="editedProduct.colors[i].name" placeholder="e.g., Đỏ" />
+      </mat-form-field>
 
-    <mat-form-field appearance="fill" class="form-field">
-      <mat-label>Hex Code</mat-label>
-      <input matInput [(ngModel)]="editedProduct.colors[i].hex" placeholder="#FFC7C7" />
-    </mat-form-field>
+      <mat-form-field appearance="fill" class="form-field">
+        <mat-label>Hex Code</mat-label>
+        <input matInput [(ngModel)]="editedProduct.colors[i].hex" placeholder="#FFC7C7" />
+      </mat-form-field>
 
-    <button mat-icon-button color="warn" (click)="removeColor(i)">
-      <mat-icon>delete</mat-icon>
-    </button>
-  </div>
+      <button mat-icon-button color="warn" (click)="removeColor(i)">
+        <mat-icon>delete</mat-icon>
+      </button>
+    </div>    
+    <!-- Add new color button -->
+    <button mat-stroked-button color="primary" (click)="addColor()">Add Color</button>
 
-  <!-- Add new color button -->
-  <button mat-stroked-button color="primary" (click)="addColor()">Add Color</button>
+    <h3>Images</h3>
     <div class="full-width">
       <label for="imageUpload">Upload Images</label>
       <input type="file" id="imageUpload" multiple (change)="onImagesSelected($event)" accept="image/*" />

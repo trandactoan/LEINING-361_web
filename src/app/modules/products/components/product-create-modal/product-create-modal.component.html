@@ -32,6 +32,20 @@
     </mat-form-field>
   </div>
 
+  <h3>Sizes</h3>
+  <div *ngFor="let size of newProduct.sizes; let j = index; trackBy: trackByIndex" class="size-item">
+    <mat-form-field>
+      <mat-label>Size</mat-label>
+      <input matInput [(ngModel)]="newProduct.sizes[j]" name="size-{{j}}">
+    </mat-form-field>
+    <button mat-icon-button color="warn" type="button" (click)="removeSize(j)">
+        <mat-icon>delete</mat-icon>
+    </button>
+  </div>
+
+  <!-- Add new detail button -->
+  <button mat-stroked-button color="primary" (click)="addSize()">Add Size</button>
+
   <h3>Details</h3>
   <div formArrayName="details">
     <div *ngFor="let detail of newProduct.details; let i = index" class="detail-item">

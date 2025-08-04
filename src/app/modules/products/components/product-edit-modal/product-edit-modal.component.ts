@@ -117,4 +117,16 @@ export class ProductEditModalComponent {
   removeColor(index: number) {
     this.editedProduct.colors.splice(index, 1);
   }
+
+  addSize() {
+    this.editedProduct.sizes.push('');
+  }
+
+  removeSize(index: number) {
+    this.editedProduct.sizes.splice(index, 1);
+  }
+
+  trackByIndex(index: number, item: any): number {
+    return index;
+  }
 }
