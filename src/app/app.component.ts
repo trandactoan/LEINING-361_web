@@ -15,7 +15,7 @@ import { AngularMaterialModule } from './shared/materials/angular.material';
     AngularMaterialModule
 ],
   templateUrl: './app.component.html',
-  styleUrl: './app.component.scss'
+  styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
   title = 'leining-361-web';

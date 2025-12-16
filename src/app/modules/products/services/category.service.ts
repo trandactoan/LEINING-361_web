@@ -1,6 +1,6 @@
 import { Observable } from "rxjs";
 import { HttpService } from "../../../shared/services/http.service";
-import { CategoryDetail } from "../models/category-list.mode";
+import { CategoryDetail } from "../models/category-list.model";
 import { Injectable } from "@angular/core";
 
 @Injectable()

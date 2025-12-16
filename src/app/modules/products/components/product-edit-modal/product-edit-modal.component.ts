@@ -1,4 +1,4 @@
-import { Component, Inject } from '@angular/core';
+import { Component, Inject, OnInit, AfterViewInit, ViewChildren, QueryList, ElementRef } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { CommonModule } from '@angular/common';
 import { MatDialogModule } from '@angular/material/dialog';
@@ -6,12 +6,15 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { FormsModule } from '@angular/forms';
-import { ProductDetail } from '../../models/product-detail.model';
 import { ProductService } from '../../services/product.service';
-import { MatSelectModule } from '@angular/material/select';
-import { CategoryDetail } from '../../models/category-list.mode';
-import { MatIconModule } from '@angular/material/icon';
 import { ImageService } from '../../../../shared/services/image.service';
+import { MatSelectModule } from '@angular/material/select';
+import { CategoryDetail } from '../../models/category-list.model';
+import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatTableModule } from '@angular/material/table';
 
 @Component({
   selector: 'app-product-edit-modal',
@@ -24,109 +27,488 @@ import { ImageService } from '../../../../shared/services/image.service';
     MatInputModule,
     MatButtonModule,
     MatSelectModule,
-    MatButtonModule,
-    MatIconModule
+    MatSlideToggleModule,
+    MatChipsModule,
+    MatTableModule,
+    MatIconModule,
+    MatProgressSpinnerModule
   ],
   templateUrl: './product-edit-modal.component.html',
-  providers: [ProductService]
+  styleUrls: ['./product-edit-modal.component.scss'],
+  providers: [ProductService, ImageService]
 })
-export class ProductEditModalComponent {
-  editedProduct: ProductDetail;
-  categories: CategoryDetail[];
+export class ProductEditModalComponent implements OnInit, AfterViewInit {
+  editedProduct: any = {
+    id: '',
+    name: '',
+    price: 0,
+    originalPrice: 0,
+    categoryId: '',
+    brandId: '',
+    details: [],
+    images: [],
+    hasVariants: false,
+    variants: [],
+    stock: 0,
+    sku: ''
+  };
+
+  categories: CategoryDetail[] = [];
+
+  // Image management
+  imagePreviews: string[] = []; // preview URLs (both original URLs and data URLs for new files)
+  imageFiles: File[] = []; // new files selected by user
+  originalImages: string[] = []; // existing image URLs from server
+  deleteImage: string[] = [];
+
+  // Size guide management
+  sizeGuidePreview: string = '';
+  sizeGuideUrl: string = '';
+  originalSizeGuide: string = '';
+
+  // Variants
+  hasVariants: boolean = false;
+  productVariants: any[] = [];
+  variantImagePreviews: Map<number, string> = new Map();
+  // Option-based variant generation (like create modal)
+  variantOptions: { name: string; values: { name: string }[] }[] = [ { name: '', values: [] } ];
+  newOptionValues: string[] = [''];
+
+  // Table columns
+  displayedColumns: string[] = ['variant', 'price', 'originalPrice', 'stock', 'sku', 'variationImage', 'actions'];
+
+  // ViewChildren for detail image inputs
+  @ViewChildren('detailImageInput') detailImageInputs!: QueryList<ElementRef<HTMLInputElement>>;
+  @ViewChildren('richTextEditor') richTextEditors!: QueryList<ElementRef<HTMLDivElement>>;
+  currentDetailIndex: number = 0;
 
   constructor(
-    private productService : ProductService,
+    private productService: ProductService,
     private imageService: ImageService,
     private dialogRef: MatDialogRef<ProductEditModalComponent>,
     @Inject(MAT_DIALOG_DATA) public data: any,
   ) {
-    this.editedProduct = { ...data.product }; // clone to edit safely
-    this.categories = data.categories;
-  }
-  ngOnInit(){
-    this.imagePreviews = this.editedProduct.images.map(url => ({
-      previewUrl: url,
-      isNew: false
-    }));
+    if (data?.product) {
+      this.editedProduct = structuredClone(data.product);
+    }
+    if (data?.categories) {
+      this.categories = data.categories;
+    }
   }
 
-  save(){
-    this.productService.updateProduct(this.editedProduct).subscribe({
-      next: () => {
-        this.dialogRef.close({ updated: true, updatedProduct: this.editedProduct });
+  ngOnInit(): void {
+    // Initialize images
+    this.originalImages = Array.isArray(this.editedProduct.images) ? [...this.editedProduct.images] : [];
+    this.imagePreviews = [...this.originalImages];
+
+    // Initialize size guide
+    if (this.editedProduct.sizeGuide) {
+      this.originalSizeGuide = this.editedProduct.sizeGuide;
+      this.sizeGuideUrl = this.editedProduct.sizeGuide;
+      this.sizeGuidePreview = this.editedProduct.sizeGuide;
+    }
+
+    // Initialize variants
+    this.hasVariants = !!this.editedProduct.hasVariants;
+    if (this.hasVariants) {
+      this.productVariants = Array.isArray(this.editedProduct.variants) ? structuredClone(this.editedProduct.variants || []) : [];
+      this.productVariants.forEach((variant: any, idx: number) => {
+        if (variant?.variationImage && typeof variant.variationImage === 'string') {
+          this.variantImagePreviews.set(idx, variant.variationImage);
+        }
+      });
+      // initialize variantOptions from existing variants if any
+      if (this.productVariants.length > 0) {
+        const optionMap: Record<string, Set<string>> = {};
+        this.productVariants.forEach(v => {
+          (v.attributes || []).forEach((a: any) => {
+            optionMap[a.name] = optionMap[a.name] || new Set<string>();
+            optionMap[a.name].add(a.value);
+          });
+        });
+        const opts = Object.keys(optionMap).map(name => ({ name, values: Array.from(optionMap[name]).map(v => ({ name: v })) }));
+        if (opts.length > 0) {
+          this.variantOptions = opts;
+          this.newOptionValues = opts.map(() => '');
+        }
+      }
+    }
+
+    if (!this.editedProduct.details) this.editedProduct.details = [];
+  }
+
+  ngAfterViewInit(): void {
+    // Set initial content for rich text editors
+    setTimeout(() => {
+      this.richTextEditors.forEach((editor, index) => {
+        if (this.editedProduct.details[index]?.content) {
+          editor.nativeElement.innerHTML = this.editedProduct.details[index].content;
+        }
+      });
+    });
+  }
+
+  onVariantsToggle(): void {
+    this.hasVariants = !!this.hasVariants;
+    if (this.hasVariants) {
+      // Ensure productVariants array exists and has at least one entry to allow editing
+      if (!Array.isArray(this.productVariants) || this.productVariants.length === 0) {
+        this.productVariants = [{ id: undefined, attributes: [], price: this.editedProduct.price || 0, originalPrice: this.editedProduct.originalPrice || 0, stock: 0, sku: '', variationImage: undefined }];
+      }
+    } else {
+      // turning off variants clears productVariants
+      this.productVariants = [];
+    }
+  }
+
+  // Save: prepare structured data and call update on service.
+  save(): void {
+    const productData = this.prepareProductData();
+    this.isSaving = true;
+
+    // ProductService.updateProduct handles uploading new images and variant images.
+    this.productService.updateProduct(productData).subscribe({
+      next: (res) => {
+        this.isSaving = false;
+        this.dialogRef.close({ updated: true, updatedProduct: res });
       },
       error: (err) => {
+        this.isSaving = false;
         console.error('Update failed', err);
+      },
+      complete: () => {
+        this.isSaving = false;
       }
     });
-    this.deleteImage.forEach((imageName) => {
-      this.imageService.removeImage(imageName).subscribe();
-    });
-    this.deleteImage = [];
   }
 
-  cancel(): void {  
-    this.deleteImage = [];
+  cancelDialog(): void {
     this.dialogRef.close();
   }
 
-  addDetail(): void {
-    this.editedProduct.details.push({ title: '', content: '' });
+  private prepareProductData(): any {
+    const base: any = {
+      id: this.editedProduct.id,
+      name: this.editedProduct.name,
+      categoryId: this.editedProduct.categoryId,
+      brandId: this.editedProduct.brandId,
+      details: this.editedProduct.details || [],
+      // keep existing image URLs separately and newFiles for upload
+      images: [...this.originalImages],
+      newImages: [...this.imageFiles],
+      deleteImages: [...this.deleteImage],
+      hasVariants: this.hasVariants,
+      sizeGuide: this.sizeGuideUrl || undefined
+    };
+
+    if (this.hasVariants) {
+      base.variants = this.productVariants.map(v => ({
+        id: v.id,
+        attributes: v.attributes,
+        price: v.price,
+        originalPrice: v.originalPrice,
+        stock: v.stock,
+        sku: v.sku,
+        variationImage: v.variationImage instanceof File ? v.variationImage : v.variationImage
+      }));
+    } else {
+      // non-variant product keeps top-level inventory fields
+      base.price = this.editedProduct.price;
+      base.originalPrice = this.editedProduct.originalPrice;
+      base.stock = this.editedProduct.stock;
+      base.sku = this.editedProduct.sku;
+      base.variants = undefined;
+    }
+
+    return base;
   }
 
-  removeDetail(index: number): void {
-    this.editedProduct.details.splice(index, 1);
+  getDiscount(): number {
+    if (!this.editedProduct.originalPrice || !this.editedProduct.price) {
+      return 0;
+    }
+    const discount = ((this.editedProduct.originalPrice - this.editedProduct.price) /
+                     this.editedProduct.originalPrice) * 100;
+    return Math.round(discount);
   }
 
-  imagePreviews: { previewUrl: string; file?: File; isNew: boolean }[] = [];
-  deleteImage: string[] = [];
-
-  onImagesSelected(event: Event) {
+  // Image selection for main images
+  onImagesSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (!input.files) return;
 
     Array.from(input.files).forEach(file => {
+      this.imageFiles.push(file);
+
       const reader = new FileReader();
-      reader.onload = () => {
-        this.imagePreviews.push({
-          previewUrl: reader.result as string,
-          file: file,
-          isNew: true
-        });
-        this.imageService.uploadImage(file).subscribe((newImageDetail)=>{
-          this.editedProduct.images.push(newImageDetail.filename); // store base64 or URL
-        });
+      reader.onload = (e: any) => {
+        this.imagePreviews.push(e.target.result);
       };
       reader.readAsDataURL(file);
     });
   }
-  removeImage(index: number){
-    var name = this.editedProduct.images[index];
-    if(this.imagePreviews[index].isNew == true){
-      this.editedProduct.images.splice(index, 1);
-      this.imageService.removeImage(name).subscribe();
+
+  removeImage(index: number): void {
+    // If the removed index refers to an original image
+    if (index < this.originalImages.length) {
+      const removed = this.originalImages.splice(index, 1)[0];
+      if (removed) this.deleteImage.push(removed);
+      this.imagePreviews.splice(index, 1);
     } else {
-      this.deleteImage.push(name);
+      // New image
+      const newIndex = index - this.originalImages.length;
+      this.imageFiles.splice(newIndex, 1);
+      this.imagePreviews.splice(index, 1);
     }
-    this.imagePreviews.splice(index, 1);
-  }
-    addColor() {
-    this.editedProduct.colors.push({ name: '', hex: '' });
   }
 
-  removeColor(index: number) {
-    this.editedProduct.colors.splice(index, 1);
+  // Size guide handling
+  async onSizeGuideSelected(event: Event): Promise<any> {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+
+      const reader = new FileReader();
+      reader.onload = (e: any) => {
+        this.sizeGuidePreview = e.target.result;
+      };
+      reader.readAsDataURL(file);
+
+      const response = await this.imageService.uploadImage(file).toPromise();
+      this.sizeGuideUrl = response?.url!;
+    }
   }
 
-  addSize() {
-    this.editedProduct.sizes.push('');
+  async removeSizeGuide(): Promise<any> {
+    if (this.sizeGuideUrl && this.sizeGuideUrl !== this.originalSizeGuide) {
+      await this.imageService.removeImage(this.sizeGuideUrl);
+    }
+    this.sizeGuideUrl = '';
+    this.sizeGuidePreview = '';
   }
 
-  removeSize(index: number) {
-    this.editedProduct.sizes.splice(index, 1);
+  addDetail(): void{
+    if (!this.editedProduct.details) this.editedProduct.details = [];
+    this.editedProduct.details.push({ title: '', content: '' });
   }
 
-  trackByIndex(index: number, item: any): number {
-    return index;
+  addVariant(): void {
+    if (!this.productVariants) this.productVariants = [];
+    this.productVariants.push({ id: undefined, attributes: [], price: 0, originalPrice: 0, stock: 0, sku: '', variationImage: undefined });
   }
+
+  // Variant option management (from create modal)
+  addVariantOption(): void {
+    if (this.variantOptions.length < 2) {
+      this.variantOptions.push({ name: '', values: [] });
+      this.newOptionValues.push('');
+      this.updateVariantsFromOptions();
+    }
+  }
+
+  removeVariantOption(index: number): void {
+    this.variantOptions.splice(index, 1);
+    this.newOptionValues.splice(index, 1);
+    this.updateVariantsFromOptions();
+  }
+
+  addOptionValue(optionIndex: number): void {
+    const value = this.newOptionValues[optionIndex]?.trim();
+    if (!value) return;
+    this.variantOptions[optionIndex].values.push({ name: value });
+    this.newOptionValues[optionIndex] = '';
+    this.updateVariantsFromOptions();
+  }
+
+  removeOptionValue(optionIndex: number, valueIndex: number): void {
+    this.variantOptions[optionIndex].values.splice(valueIndex, 1);
+    this.updateVariantsFromOptions();
+  }
+
+  updateVariantsFromOptions(): void {
+    if (!this.hasVariants) return;
+    const validOptions = this.variantOptions.filter(opt => opt.name && opt.values && opt.values.length > 0);
+    if (validOptions.length === 0) {
+      this.productVariants = [];
+      return;
+    }
+    this.productVariants = this.generateVariantCombinations(validOptions);
+  }
+
+  // alias to match create modal API
+  updateVariants(): void {
+    this.updateVariantsFromOptions();
+  }
+
+  applyToAllVariants(): void {
+    const price = this.editedProduct.price || 0;
+    this.productVariants.forEach(v => v.price = price);
+  }
+
+  removeVariant(index: number): void {
+    // Create a new array to trigger Angular change detection
+    this.productVariants = this.productVariants.filter((_, i) => i !== index);
+
+    // Re-index the variant image previews map
+    const newPreviews = new Map<number, string>();
+    this.variantImagePreviews.forEach((value, key) => {
+      if (key < index) {
+        newPreviews.set(key, value);
+      } else if (key > index) {
+        newPreviews.set(key - 1, value);
+      }
+      // Skip the deleted index
+    });
+    this.variantImagePreviews = newPreviews;
+  }
+
+  generateVariantCombinations(options: { name: string; values: { name: string }[] }[]): any[] {
+    if (!options || options.length === 0) return [];
+    const combinations: any[] = [];
+    const generate = (index: number, current: any[]) => {
+      if (index === options.length) {
+        combinations.push({ attributes: [...current], price: this.editedProduct.price || 0, originalPrice: this.editedProduct.originalPrice || 0, stock: 0, sku: '', variationImage: undefined });
+        return;
+      }
+      const option = options[index];
+      for (const value of option.values) {
+        generate(index + 1, [...current, { name: option.name, value: value.name }]);
+      }
+    };
+    generate(0, []);
+    return combinations;
+  }
+
+  removeDetail(index: number): void {
+    this.editedProduct.details?.splice(index, 1);
+  }
+
+  // Rich text editor methods
+  execCommand(command: string, detailIndex: number): void {
+    document.execCommand(command, false, undefined);
+  }
+
+  onContentChange(event: Event, detailIndex: number): void {
+    const element = event.target as HTMLElement;
+    this.editedProduct.details[detailIndex].content = element.innerHTML;
+  }
+
+  insertImageInDetail(detailIndex: number): void {
+    this.currentDetailIndex = detailIndex;
+    const inputArray = this.detailImageInputs.toArray();
+    if (inputArray && inputArray[detailIndex]) {
+      inputArray[detailIndex].nativeElement.click();
+    }
+  }
+
+  async onDetailImageSelected(event: Event, detailIndex: number): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+
+      try {
+        // Upload image to server
+        const response = await this.imageService.uploadImage(file).toPromise();
+        const imageUrl = response?.path;
+
+        if (imageUrl) {
+          // Get the editor element
+          const editorElements = document.querySelectorAll('.rich-text-editor');
+          const editorElement = editorElements[detailIndex] as HTMLElement;
+
+          if (editorElement) {
+            // Focus the editor
+            editorElement.focus();
+
+            // Save current selection
+            const selection = window.getSelection();
+            let range: Range;
+
+            if (selection && selection.rangeCount > 0) {
+              range = selection.getRangeAt(0);
+            } else {
+              // If no selection, create one at the end
+              range = document.createRange();
+              range.selectNodeContents(editorElement);
+              range.collapse(false);
+            }
+
+            // Create the image element
+            const img = document.createElement('img');
+            img.src = imageUrl;
+            img.alt = 'Detail image';
+            img.style.maxWidth = '100%';
+            img.style.height = 'auto';
+            img.style.margin = '8px 0';
+            img.style.display = 'block';
+
+            // Create a paragraph with a text node for typing after the image
+            const p = document.createElement('p');
+            const textNode = document.createTextNode('\u200B'); // Zero-width space
+            p.appendChild(textNode);
+
+            // Insert image first
+            range.deleteContents();
+            range.insertNode(img);
+
+            // Move range after the image and insert paragraph
+            range.setStartAfter(img);
+            range.collapse(true);
+            range.insertNode(p);
+
+            // Move cursor into the text node at the end
+            range.setStart(textNode, 1);
+            range.setEnd(textNode, 1);
+            selection?.removeAllRanges();
+            selection?.addRange(range);
+
+            // Update the content
+            this.editedProduct.details[detailIndex].content = editorElement.innerHTML;
+
+            // Keep focus
+            editorElement.focus();
+          }
+        }
+      } catch (error) {
+        console.error('Failed to upload image:', error);
+      }
+
+      // Reset input
+      input.value = '';
+    }
+  }
+
+  // Variation image handling
+  onVariationImageSelected(event: Event, variantIndex: number): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+      // store File on the variant for upload
+      if (!this.productVariants[variantIndex]) return;
+      this.productVariants[variantIndex].variationImage = file;
+
+      const reader = new FileReader();
+      reader.onload = (e: any) => {
+        const preview = e.target.result as string;
+        this.variantImagePreviews.set(variantIndex, preview);
+        // also set on the variant for template parity with create modal
+        this.productVariants[variantIndex].variationImagePreview = preview;
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  removeVariationImage(variantIndex: number): void {
+    if (!this.productVariants[variantIndex]) return;
+    // If previously had a string URL, mark it for deletion by setting to null (handled server-side)
+    this.productVariants[variantIndex].variationImage = undefined;
+    this.variantImagePreviews.delete(variantIndex);
+  }
+
+  getVariationImagePreview(variantIndex: number): string | undefined {
+    return  this.productVariants[variantIndex]?.variationImage
+  }
+
+  trackByIndex(index: number): number { return index; }
+  isSaving: boolean = false;
 }

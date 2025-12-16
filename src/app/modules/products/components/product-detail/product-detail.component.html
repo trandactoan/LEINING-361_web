@@ -1,4 +1,4 @@
-@if (product) {
+<ng-container *ngIf="product; else loading">
   <div class="product-detail-container">
     <div class="header-bar">
       <h2 class="product-title">{{ product.name }}</h2>
@@ -26,10 +26,25 @@
         <!-- Price/Info on the Right -->
         <div class="product-info">
           <div class="price-section">
-            <span class="price">{{ product.price | currency }}</span>
-            @if (product.originalPrice > product.price) {
-              <span class="original-price">{{ product.originalPrice | currency }}</span>
-            }
+            <span class="price">{{ selectedVariant?.price ?? product.price | currency }}</span>
+            <span *ngIf="(selectedVariant?.originalPrice ?? product?.originalPrice ?? 0) > (selectedVariant?.price ?? product?.price ?? 0)" class="original-price">{{ selectedVariant?.originalPrice ?? product.originalPrice | currency }}</span>
+          </div>
+          
+          <!-- Variant options -->
+          <div class="variant-options" *ngIf="optionGroups?.length">
+            <div *ngFor="let g of optionGroups" class="option-group" style="margin-top:12px;">
+              <div class="option-label" style="font-weight:600; margin-bottom:8px;">{{ g.name }}</div>
+              <mat-chip-listbox>
+                <mat-chip-option *ngFor="let val of g.values" [selected]="selectedOptions[g.name.toLowerCase()] === val" (click)="selectOption(g.name, val)">
+                  {{ val }}
+                </mat-chip-option>
+              </mat-chip-listbox>
+            </div>
+          </div>
+
+          <div style="margin-top:12px;">
+            <div>SKU: {{ selectedVariant?.sku ?? product.sku ?? '-' }}</div>
+            <div>Stock: <span *ngIf="selectedVariant">{{ selectedVariant.stock }}</span><span *ngIf="!selectedVariant">{{ product.stock ?? 0 }}</span></div>
           </div>
         </div>
 
@@ -37,34 +52,32 @@
     </mat-card>
 
 
-    @if (product.sizes && product.sizes.length) {
-      <mat-card class="size-card">
-        <mat-card-title>Sizes</mat-card-title>
+    <mat-card class="size-card" *ngIf="product?.sizes?.length">
+      <mat-card-title>Sizes</mat-card-title>
+      <mat-card-content>
+        <div class="size-list" style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button
+            mat-stroked-button
+            *ngFor="let size of product.sizes"
+            type="button"
+          >
+            {{ size }}
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <div class="product-details">
+      <mat-card class="detail-card" *ngFor="let item of product.details">
+        <mat-card-title>{{ item.title }}</mat-card-title>
         <mat-card-content>
-          <div class="size-list" style="display:flex; gap:8px; flex-wrap:wrap;">
-            <button
-              mat-stroked-button
-              *ngFor="let size of product.sizes"
-              type="button"
-            >
-              {{ size }}
-            </button>
-          </div>
+          <p>{{ item.content }}</p>
         </mat-card-content>
       </mat-card>
-    }
-    
-    <div class="product-details">
-      @for (item of product.details; track item.title) {
-        <mat-card class="detail-card">
-          <mat-card-title>{{ item.title }}</mat-card-title>
-          <mat-card-content>
-            <p>{{ item.content }}</p>
-          </mat-card-content>
-        </mat-card>
-      }
     </div>
   </div>
-} @else {
+</ng-container>
+
+<ng-template #loading>
   <p>Loading...</p>
-}
+</ng-template>

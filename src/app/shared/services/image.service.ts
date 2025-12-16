@@ -20,8 +20,10 @@ export class ImageService{
             formData
         );
     }
-    removeImage(filename: string) {
+    removeImage(fileLink: string) {
+        var filename = fileLink.split('/').pop() || '';
         const requestUrl = this.baseUrl + '/remove/' + filename;
+        console.log('Deleting image at URL:', filename);
         return this.httpService.delete(requestUrl);
     }
 }

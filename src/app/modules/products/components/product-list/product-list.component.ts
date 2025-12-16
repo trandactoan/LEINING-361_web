@@ -9,7 +9,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { ProductEditModalComponent } from '../product-edit-modal/product-edit-modal.component';
 import { MatDialog } from '@angular/material/dialog';
 import { ProductCreateModalComponent } from '../product-create-modal/product-create-modal.component';
-import { CategoryDetail } from '../../models/category-list.mode';
+import { CategoryDetail } from '../../models/category-list.model';
 import { CategoryService } from '../../services/category.service';
 
 @Component({
@@ -17,7 +17,7 @@ import { CategoryService } from '../../services/category.service';
   standalone: true,
   imports: [MatTableModule, MatPaginatorModule, MatIconModule, MatButtonModule, RouterLink],
   templateUrl: './product-list.component.html',
-  styleUrl: './product-list.component.scss',
+  styleUrls: ['./product-list.component.scss'],
   providers: [ProductService, CategoryService]
 })
 export class ProductListComponent {
@@ -52,6 +52,7 @@ export class ProductListComponent {
     this.productService.getProductById(element.id).subscribe(product => {
       const dialogRef = this.dialog.open(ProductEditModalComponent, {
         width: '1000px',
+        maxHeight: '90vh',
         data: {product: product, categories: this.categories},
       });
       dialogRef.afterClosed().subscribe(result => {
@@ -71,14 +72,26 @@ export class ProductListComponent {
   
   onCreate() {
     const dialogRef = this.dialog.open(ProductCreateModalComponent, {
-      width: '1000px',
+      width: '90%',
+      maxWidth: '1400px',
+      maxHeight: '90vh',
       data: this.categories,
     });
     dialogRef.afterClosed().subscribe(result => {
-      if (result?.created) {
-        this.products.push(result?.data);
-        this.dataSource.data = this.products;
-        this.dataSource.paginator = this.paginator;
+      if (result) {
+        // result contains the product data from the modal
+        this.productService.createProduct(result).subscribe({
+          next: (createdProduct) => {
+            this.productService.getAll().subscribe(responseProducts => {
+              this.products = responseProducts;
+              this.dataSource.data = this.products;
+              this.dataSource.paginator = this.paginator;
+            });
+          },
+          error: (err) => {
+            console.error('Error creating product:', err);
+          }
+        });
       }
     });
   }

@@ -1,114 +1,407 @@
-<!-- product-create-modal.component.html -->
-<h2 mat-dialog-title>Create Product</h2>
-<mat-dialog-content>
-  <h3>Description and price</h3>
-  <!-- Row 1: Name & Price -->
-  <div class="form-row">
-    <mat-form-field appearance="fill" class="form-field">
-      <mat-label>Name</mat-label>
-      <input matInput [(ngModel)]="newProduct.name" />
-    </mat-form-field>
-
-    <mat-form-field appearance="fill" class="form-field">
-      <mat-label>Price</mat-label>
-      <input matInput type="number" [(ngModel)]="newProduct.price" />
-    </mat-form-field>
-  </div>
-  
-  <!-- Row 2: Original Price & Category -->
-  <div class="form-row">
-    <mat-form-field appearance="fill" class="form-field">
-      <mat-label>Original Price</mat-label>
-      <input matInput type="number" [(ngModel)]="newProduct.originalPrice" />
-    </mat-form-field>
-    
-    <mat-form-field appearance="fill" class="form-field">
-      <mat-label>Category</mat-label>
-      <mat-select [(ngModel)]="newProduct.categoryId">
-        <mat-option *ngFor="let category of categories" [value]="category.id">
-          {{ category.name }}
-        </mat-option>
-      </mat-select>
-    </mat-form-field>
-  </div>
-
-  <h3>Sizes</h3>
-  <div *ngFor="let size of newProduct.sizes; let j = index; trackBy: trackByIndex" class="size-item">
-    <mat-form-field>
-      <mat-label>Size</mat-label>
-      <input matInput [(ngModel)]="newProduct.sizes[j]" name="size-{{j}}">
-    </mat-form-field>
-    <button mat-icon-button color="warn" type="button" (click)="removeSize(j)">
-        <mat-icon>delete</mat-icon>
+<!-- product-create-modal-enhanced.component.html -->
+<div class="product-modal">
+  <div class="modal-header">
+    <h2 mat-dialog-title>Thêm sản phẩm mới</h2>
+    <button mat-icon-button class="close-btn" (click)="cancel()">
+      <mat-icon>close</mat-icon>
     </button>
   </div>
 
-  <!-- Add new detail button -->
-  <button mat-stroked-button color="primary" (click)="addSize()">Add Size</button>
-
-  <h3>Details</h3>
-  <div formArrayName="details">
-    <div *ngFor="let detail of newProduct.details; let i = index" class="detail-item">
-        <mat-form-field class="full-width">
-        <mat-label>Detail Title</mat-label>
-        <input matInput [(ngModel)]="newProduct.details[i].title" name="title-{{i}}">
+  <mat-dialog-content class="modal-content">
+    <!-- Basic Information Section -->
+    <section class="section">
+      <h3 class="section-title">Thông tin cơ bản</h3>
+      
+      <div class="form-row">
+        <mat-form-field appearance="outline" class="form-field flex-2">
+          <mat-label>Tên sản phẩm</mat-label>
+          <input matInput [(ngModel)]="newProduct.name" placeholder="Nhập tên sản phẩm" />
         </mat-form-field>
 
-        <mat-form-field class="full-width">
-        <mat-label>Detail Content</mat-label>
-        <textarea matInput [(ngModel)]="newProduct.details[i].content" name="content-{{i}}"></textarea>
+        <mat-form-field appearance="outline" class="form-field">
+          <mat-label>Danh mục</mat-label>
+          <mat-select [(ngModel)]="newProduct.categoryId">
+            <mat-option *ngFor="let category of categories" [value]="category.id">
+              {{ category.name }}
+            </mat-option>
+          </mat-select>
         </mat-form-field>
-
-        <button mat-icon-button color="warn" (click)="removeDetail(i)">
-        <mat-icon>delete</mat-icon>
-        </button>
-    </div>
-  </div>
-
-  <!-- Add new detail button -->
-  <button mat-stroked-button color="primary" (click)="addDetail()">Add Detail</button>
-
-  <h3>Colors</h3>
-  <div *ngFor="let color of newProduct.colors; let i = index" class="form-row">
-    <mat-form-field appearance="fill" class="form-field">
-      <mat-label>Color Name</mat-label>
-      <input matInput [(ngModel)]="newProduct.colors[i].name" placeholder="e.g., Đỏ" />
-    </mat-form-field>
-
-    <mat-form-field appearance="fill" class="form-field">
-      <mat-label>Hex Code</mat-label>
-      <input matInput [(ngModel)]="newProduct.colors[i].hex" placeholder="#FFC7C7" />
-    </mat-form-field>
-
-    <button mat-icon-button color="warn" (click)="removeColor(i)">
-      <mat-icon>delete</mat-icon>
-    </button>
-  </div>
-
-  <!-- Add new color button -->
-  <button mat-stroked-button color="primary" (click)="addColor()">Add Color</button>
-
-
-  <h3>Images</h3>
-  <div class="full-width">
-    <label for="imageUpload">Upload Images</label>
-    <input type="file" id="imageUpload" multiple (change)="onImagesSelected($event)" accept="image/*" />
-  </div>
-
-  <div *ngIf="imagePreviews.length > 0" class="image-preview-container">
-    <p>Previews:</p>
-    <div class="image-preview" *ngFor="let preview of imagePreviews; let i = index">
-      <div class="image-box">
-        <img [src]="preview" alt="Preview" width="100" />
-        <button mat-icon-button color="warn" class="delete-btn" (click)="removeImage(i)">
-          <mat-icon>delete</mat-icon>
-        </button>
       </div>
-    </div>
-  </div>
 
-</mat-dialog-content>
-<mat-dialog-actions align="end">
-  <button mat-button (click)="cancel()">Cancel</button>
-  <button mat-raised-button color="primary" (click)="create()">Create</button>
-</mat-dialog-actions>
+      <!-- Images Section -->
+      <div class="image-upload-section">
+        <label class="upload-label">Hình ảnh sản phẩm</label>
+        <div class="image-upload-area">
+          <input 
+            type="file" 
+            id="imageUpload" 
+            multiple 
+            (change)="onImagesSelected($event)" 
+            accept="image/*" 
+            #fileInput
+            style="display: none;"
+          />
+          
+          <div class="image-grid" *ngIf="imagePreviews.length > 0">
+            <div class="image-item" *ngFor="let preview of imagePreviews; let i = index">
+              <img [src]="preview" alt="Preview" />
+              <div class="image-overlay">
+                <button mat-icon-button class="delete-btn" (click)="removeImage(i)">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </div>
+            <div class="add-more-btn" (click)="fileInput.click()">
+              <mat-icon>add_photo_alternate</mat-icon>
+              <span>Thêm ảnh</span>
+            </div>
+          </div>
+
+          <div class="empty-upload" *ngIf="imagePreviews.length === 0" (click)="fileInput.click()">
+            <mat-icon>cloud_upload</mat-icon>
+            <p>Thêm hình ảnh trong mô tả sản phẩm</p>
+            <button mat-stroked-button color="primary">Chọn hình ảnh</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Product Details Section -->
+    <section class="section">
+      <h3 class="section-title">Chi tiết sản phẩm</h3>
+      
+      <div class="details-list">
+        <div *ngFor="let detail of newProduct.details; let i = index" class="detail-item">
+          <mat-form-field appearance="outline" class="detail-title">
+            <mat-label>Tiêu đề</mat-label>
+            <input matInput [(ngModel)]="newProduct.details[i].title" placeholder="VD: Chất liệu" />
+          </mat-form-field>
+
+          <div class="detail-content rich-text-field">
+            <label class="rich-text-label">Nội dung</label>
+            <div class="rich-text-toolbar">
+              <button type="button" mat-icon-button (click)="execCommand('bold', i)" matTooltip="Bold">
+                <mat-icon>format_bold</mat-icon>
+              </button>
+              <button type="button" mat-icon-button (click)="execCommand('italic', i)" matTooltip="Italic">
+                <mat-icon>format_italic</mat-icon>
+              </button>
+              <button type="button" mat-icon-button (click)="execCommand('underline', i)" matTooltip="Underline">
+                <mat-icon>format_underlined</mat-icon>
+              </button>
+              <button type="button" mat-icon-button (click)="execCommand('insertUnorderedList', i)" matTooltip="Bullet List">
+                <mat-icon>format_list_bulleted</mat-icon>
+              </button>
+              <button type="button" mat-icon-button (click)="execCommand('insertOrderedList', i)" matTooltip="Numbered List">
+                <mat-icon>format_list_numbered</mat-icon>
+              </button>
+              <div class="toolbar-divider"></div>
+              <button type="button" mat-icon-button (click)="insertImageInDetail(i)" matTooltip="Insert Image">
+                <mat-icon>image</mat-icon>
+              </button>
+              <input
+                type="file"
+                #detailImageInput
+                accept="image/*"
+                (change)="onDetailImageSelected($event, i)"
+                style="display: none;"
+              />
+            </div>
+            <div
+              #richTextEditor
+              class="rich-text-editor"
+              contenteditable="true"
+              (input)="onContentChange($event, i)"
+              placeholder="Mô tả chi tiết..."
+            ></div>
+          </div>
+
+          <button mat-icon-button color="warn" (click)="removeDetail(i)" class="remove-btn">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </div>
+      </div>
+
+      <button mat-stroked-button (click)="addDetail()" class="add-btn">
+        <mat-icon>add</mat-icon>
+        Thêm chi tiết
+      </button>
+    </section>
+
+    <!-- Size Guide Section -->
+    <section class="section">
+      <h3 class="section-title">Hướng dẫn chọn size (tùy chọn)</h3>
+
+      <div class="image-upload-section">
+        <label class="upload-label">Tải lên hình ảnh hướng dẫn chọn size</label>
+        <div class="image-upload-area">
+          <input
+            type="file"
+            id="sizeGuideUpload"
+            (change)="onSizeGuideSelected($event)"
+            accept="image/*"
+            #sizeGuideInput
+            style="display: none;"
+          />
+
+          <div class="image-grid" *ngIf="sizeGuidePreview">
+            <div class="image-item">
+              <img [src]="sizeGuidePreview" alt="Size Guide" />
+              <div class="image-overlay">
+                <button mat-icon-button class="delete-btn" (click)="removeSizeGuide()">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="empty-upload" *ngIf="!sizeGuidePreview" (click)="sizeGuideInput.click()">
+            <mat-icon>straighten</mat-icon>
+            <p>Tải lên bảng hướng dẫn chọn size</p>
+            <button mat-stroked-button color="primary">Chọn hình ảnh</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h3 class="section-title">Khoảng giá sản phẩm</h3>
+      <div class="form-row">
+        <mat-form-field appearance="outline" class="form-field">
+          <mat-label>Giá bán</mat-label>
+          <input matInput type="number" [(ngModel)]="newProduct.price" placeholder="0" />
+          <span matTextSuffix>₫&nbsp;</span>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="form-field">
+          <mat-label>Giá gốc (tùy chọn)</mat-label>
+          <input matInput type="number" [(ngModel)]="newProduct.originalPrice" placeholder="0" />
+          <span matTextSuffix>₫&nbsp;</span>
+          <mat-hint *ngIf="getDiscount() > 0">Giảm {{ getDiscount() }}%</mat-hint>
+        </mat-form-field>
+      </div>
+    </section>
+
+    <!-- Variants Section (Shopify-style) -->
+    <section class="section variants-section">
+      <div class="section-header">
+        <h3 class="section-title">Thông tin bán hàng</h3>
+        <mat-slide-toggle [(ngModel)]="hasVariants" (change)="onVariantsToggle()">
+          Phân loại hàng
+        </mat-slide-toggle>
+      </div>
+
+      <div *ngIf="hasVariants" class="variants-config">
+        <!-- Variant Options Configuration -->
+        <div class="variant-options">
+          <div *ngFor="let option of variantOptions; let i = index" class="variant-option">
+            <div class="option-header">
+              <mat-form-field appearance="outline" class="option-name">
+                <mat-label>Nhóm phân loại {{ i + 1 }}</mat-label>
+                <input 
+                  matInput 
+                  [(ngModel)]="option.name" 
+                  placeholder="VD: Màu sắc, Kích thước"
+                  (blur)="updateVariants()"
+                />
+              </mat-form-field>
+              <button 
+                mat-icon-button 
+                color="warn" 
+                (click)="removeVariantOption(i)"
+                *ngIf="variantOptions.length > 1"
+              >
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+
+            <!-- Option Values -->
+            <div class="option-values">
+              <mat-chip-listbox [(ngModel)]="option.selectedValues" multiple>
+                <mat-chip-option 
+                  *ngFor="let value of option.values; let j = index"
+                  [value]="value"
+                  [removable]="true"
+                  (removed)="removeOptionValue(i, j)"
+                >
+                  {{ value.name }}
+                  <mat-icon matChipRemove>cancel</mat-icon>
+                </mat-chip-option>
+              </mat-chip-listbox>
+
+              <!-- Add Value Input -->
+              <div class="add-value-input">
+                <mat-form-field appearance="outline" class="value-input">
+                  <mat-label>Thêm tùy chọn</mat-label>
+                  <input 
+                    matInput 
+                    [(ngModel)]="newOptionValues[i]"
+                    (keyup.enter)="addOptionValue(i)"
+                    placeholder="Nhập và Enter"
+                  />
+                </mat-form-field>                
+                <button mat-icon-button color="primary" (click)="addOptionValue(i)">
+                  <mat-icon>add</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <button 
+            mat-stroked-button 
+            (click)="addVariantOption()"
+            class="add-btn"
+            *ngIf="variantOptions.length < 2"
+          >
+            <mat-icon>add</mat-icon>
+            Thêm nhóm phân loại {{ variantOptions.length + 1 }}
+          </button>
+        </div>
+
+        <!-- Variant List Table -->
+        <div class="variant-list" *ngIf="productVariants.length > 0">
+          <div class="list-header">
+            <h4>Danh sách phân loại hàng</h4>
+          </div>
+
+          <div class="variant-table">
+            <table mat-table [dataSource]="productVariants" class="variants-table">
+              <!-- Variant Column -->
+              <ng-container matColumnDef="variant">
+                <th mat-header-cell *matHeaderCellDef>Phân loại hàng</th>
+                <td mat-cell *matCellDef="let variant">
+                  <div class="variant-name">
+                    <span class="variant-badge" *ngFor="let attr of variant.attributes">
+                      {{ attr.value }}
+                    </span>
+                  </div>
+                </td>
+              </ng-container>
+
+              <!-- Price Column -->
+              <ng-container matColumnDef="price">
+                <th mat-header-cell *matHeaderCellDef>Giá</th>
+                <td mat-cell *matCellDef="let variant">
+                  <mat-form-field appearance="outline" class="table-input">
+                    <input matInput type="number" [(ngModel)]="variant.price" />
+                    <span matTextSuffix>₫&nbsp;</span>
+                  </mat-form-field>
+                </td>
+              </ng-container>
+
+
+              <!-- Original Price Column -->
+              <ng-container matColumnDef="originalPrice">
+                <th mat-header-cell *matHeaderCellDef>Giá Gốc</th>
+                <td mat-cell *matCellDef="let variant">
+                  <mat-form-field appearance="outline" class="table-input">
+                    <input matInput type="number" [(ngModel)]="variant.originalPrice" />
+                    <span matTextSuffix>₫&nbsp;</span>
+                  </mat-form-field>
+                </td>
+              </ng-container>
+
+              <!-- Stock Column -->
+              <ng-container matColumnDef="stock">
+                <th mat-header-cell *matHeaderCellDef>Kho hàng</th>
+                <td mat-cell *matCellDef="let variant">
+                  <mat-form-field appearance="outline" class="table-input">
+                    <input matInput type="number" [(ngModel)]="variant.stock" />
+                  </mat-form-field>
+                </td>
+              </ng-container>
+
+              <!-- SKU Column -->
+              <ng-container matColumnDef="sku">
+                <th mat-header-cell *matHeaderCellDef>SKU phân loại</th>
+                <td mat-cell *matCellDef="let variant">
+                  <mat-form-field appearance="outline" class="table-input">
+                    <input matInput [(ngModel)]="variant.sku" placeholder="Tùy chọn" />
+                  </mat-form-field>
+                </td>
+              </ng-container>
+
+              <!-- Variation Image -->
+              <ng-container matColumnDef="variationImage">
+                <th mat-header-cell *matHeaderCellDef>Hình ảnh</th>
+                <td mat-cell *matCellDef="let variant; let i = index">
+                  <div class="variation-image-cell">
+                    <div class="image-preview" *ngIf="getVariationImagePreview(i)">
+                      <img [src]="getVariationImagePreview(i)" alt="Variation preview" />
+                      <button mat-icon-button (click)="removeVariationImage(i)" class="remove-image-btn">
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    </div>
+                    <div class="no-image" *ngIf="!getVariationImagePreview(i)">
+                      <input 
+                        type="file" 
+                        #variantFileInput
+                        accept="image/*" 
+                        (change)="onVariationImageSelected($event, i)"
+                        style="display: none;"
+                      />
+                      <button mat-icon-button (click)="variantFileInput.click()" class="upload-btn">
+                        <mat-icon>add_photo_alternate</mat-icon>
+                      </button>
+                    </div>
+                  </div>
+                </td>
+              </ng-container>
+
+              <!-- Actions Column -->
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef></th>
+                <td mat-cell *matCellDef="let variant; let i = index">
+                  <button mat-icon-button (click)="removeVariant(i)">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+            </table>
+          </div>
+
+          <div class="variant-warning" *ngIf="productVariants.length === 0">
+            <mat-icon>info</mat-icon>
+            <p>Không thể tìm ví sản phẩm dàng có 1 tối cần được chỉnh sửa. 
+              <a href="#" (click)="$event.preventDefault()">Chỉnh sửa ngay</a>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Simple Inventory (No Variants) -->
+      <div *ngIf="!hasVariants" class="simple-inventory">
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="form-field">
+            <mat-label>Kho hàng</mat-label>
+            <input matInput type="number" [(ngModel)]="newProduct.stock" placeholder="0" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="form-field">
+            <mat-label>SKU</mat-label>
+            <input matInput [(ngModel)]="newProduct.sku" placeholder="Mã sản phẩm" />
+          </mat-form-field>
+        </div>
+      </div>
+    </section>
+  </mat-dialog-content>
+
+  <!-- Footer Actions -->
+  <mat-dialog-actions class="modal-actions">
+    <div class="actions-left">
+      <button mat-button (click)="cancel()">Hủy</button>
+    </div>
+    <div class="actions-right">
+      <button mat-stroked-button (click)="saveAndHide()">
+        Lưu & Ẩn
+      </button>
+      <button mat-raised-button color="primary" (click)="create()">
+        <mat-icon>check</mat-icon>
+        Lưu & Hiển thị
+      </button>
+    </div>
+  </mat-dialog-actions>
+</div>

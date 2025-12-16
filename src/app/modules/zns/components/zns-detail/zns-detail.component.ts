@@ -12,7 +12,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
   standalone: true,
   imports: [MatInputModule, MatFormFieldModule, MatButtonModule , MatIconModule ,FormsModule   ],
   templateUrl: './zns-detail.component.html',
-  styleUrl: './zns-detail.component.scss',
+  styleUrls: ['./zns-detail.component.scss'],
   providers: [ZnsService]
 })
 export class ZnsDetailComponent {
