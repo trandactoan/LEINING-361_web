@@ -51,7 +51,7 @@ export class ProductListComponent {
   onEdit(element: ProductListElement) {
     this.productService.getProductById(element.id).subscribe(product => {
       const dialogRef = this.dialog.open(ProductEditModalComponent, {
-        width: '1000px',
+        width: '80vw',
         maxHeight: '90vh',
         data: {product: product, categories: this.categories},
       });
@@ -72,8 +72,7 @@ export class ProductListComponent {
   
   onCreate() {
     const dialogRef = this.dialog.open(ProductCreateModalComponent, {
-      width: '90%',
-      maxWidth: '1400px',
+      width: '80vw',
       maxHeight: '90vh',
       data: this.categories,
     });

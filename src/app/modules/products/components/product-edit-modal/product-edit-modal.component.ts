@@ -198,7 +198,9 @@ export class ProductEditModalComponent implements OnInit, AfterViewInit {
       newImages: [...this.imageFiles],
       deleteImages: [...this.deleteImage],
       hasVariants: this.hasVariants,
-      sizeGuide: this.sizeGuideUrl || undefined
+      sizeGuide: this.sizeGuideUrl || undefined,
+      price: this.editedProduct.price,
+      originalPrice: this.editedProduct.originalPrice
     };
 
     if (this.hasVariants) {
@@ -213,8 +215,6 @@ export class ProductEditModalComponent implements OnInit, AfterViewInit {
       }));
     } else {
       // non-variant product keeps top-level inventory fields
-      base.price = this.editedProduct.price;
-      base.originalPrice = this.editedProduct.originalPrice;
       base.stock = this.editedProduct.stock;
       base.sku = this.editedProduct.sku;
       base.variants = undefined;
