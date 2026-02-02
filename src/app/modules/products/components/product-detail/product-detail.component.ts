@@ -116,6 +116,7 @@ export class ProductDetailComponent {
   openEditDialog(): void {
     const dialogRef = this.dialog.open(ProductEditModalComponent, {
       width: '80vw',
+      maxWidth: '80vw',
       maxHeight: '90vh',
       data: {product: this.product, categories: this.categories}
     });
