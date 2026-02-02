@@ -12,6 +12,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTableModule } from '@angular/material/table';
+import { DragDropModule, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { ProductService } from '../../services/product.service';
 import { ImageService } from '../../../../shared/services/image.service';
 import { ProductVariant, VariantAttribute, VariantOption, VariantOptionValue } from '../../models/product-variant.model';
@@ -50,7 +51,8 @@ export interface Product {
     MatIconModule,
     MatSlideToggleModule,
     MatChipsModule,
-    MatTableModule
+    MatTableModule,
+    DragDropModule
   ],
   templateUrl: './product-create-modal.component.html',
   styleUrls: ['./product-create-modal.component.scss'],
@@ -144,6 +146,12 @@ export class ProductCreateModalComponent implements OnInit {
     this.imageFiles.splice(index, 1);
     await this.imageService.removeImage(this.imageUrl[index]);
     this.imageUrl.splice(index, 1);
+  }
+
+  dropImage(event: CdkDragDrop<string[]>): void {
+    moveItemInArray(this.imagePreviews, event.previousIndex, event.currentIndex);
+    moveItemInArray(this.imageFiles, event.previousIndex, event.currentIndex);
+    moveItemInArray(this.imageUrl, event.previousIndex, event.currentIndex);
   }
 
   // Size guide handling

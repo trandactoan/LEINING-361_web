@@ -15,6 +15,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTableModule } from '@angular/material/table';
+import { DragDropModule, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 
 @Component({
   selector: 'app-product-edit-modal',
@@ -31,7 +32,8 @@ import { MatTableModule } from '@angular/material/table';
     MatChipsModule,
     MatTableModule,
     MatIconModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    DragDropModule
   ],
   templateUrl: './product-edit-modal.component.html',
   styleUrls: ['./product-edit-modal.component.scss'],
@@ -55,11 +57,22 @@ export class ProductEditModalComponent implements OnInit, AfterViewInit {
 
   categories: CategoryDetail[] = [];
 
-  // Image management
-  imagePreviews: string[] = []; // preview URLs (both original URLs and data URLs for new files)
-  imageFiles: File[] = []; // new files selected by user
-  originalImages: string[] = []; // existing image URLs from server
+  // Image management - unified tracking
+  imageItems: { preview: string; source: string | File; isOriginal: boolean }[] = [];
   deleteImage: string[] = [];
+
+  // Computed getters for backward compatibility
+  get imagePreviews(): string[] {
+    return this.imageItems.map(item => item.preview);
+  }
+
+  get originalImages(): string[] {
+    return this.imageItems.filter(item => item.isOriginal).map(item => item.source as string);
+  }
+
+  get imageFiles(): File[] {
+    return this.imageItems.filter(item => !item.isOriginal).map(item => item.source as File);
+  }
 
   // Size guide management
   sizeGuidePreview: string = '';
@@ -97,9 +110,13 @@ export class ProductEditModalComponent implements OnInit, AfterViewInit {
   }
 
   ngOnInit(): void {
-    // Initialize images
-    this.originalImages = Array.isArray(this.editedProduct.images) ? [...this.editedProduct.images] : [];
-    this.imagePreviews = [...this.originalImages];
+    // Initialize images with unified tracking
+    const existingImages = Array.isArray(this.editedProduct.images) ? this.editedProduct.images : [];
+    this.imageItems = existingImages.map((url: string) => ({
+      preview: url,
+      source: url,
+      isOriginal: true
+    }));
 
     // Initialize size guide
     if (this.editedProduct.sizeGuide) {
@@ -187,15 +204,17 @@ export class ProductEditModalComponent implements OnInit, AfterViewInit {
   }
 
   private prepareProductData(): any {
+    // Preserve image order: map imageItems to their sources (URLs or Files)
+    const orderedImages = this.imageItems.map(item => item.source);
+
     const base: any = {
       id: this.editedProduct.id,
       name: this.editedProduct.name,
       categoryId: this.editedProduct.categoryId,
       brandId: this.editedProduct.brandId,
       details: this.editedProduct.details || [],
-      // keep existing image URLs separately and newFiles for upload
-      images: [...this.originalImages],
-      newImages: [...this.imageFiles],
+      // Send ordered images (mixed URLs and Files) to preserve order
+      images: orderedImages,
       deleteImages: [...this.deleteImage],
       hasVariants: this.hasVariants,
       sizeGuide: this.sizeGuideUrl || undefined,
@@ -238,28 +257,28 @@ export class ProductEditModalComponent implements OnInit, AfterViewInit {
     if (!input.files) return;
 
     Array.from(input.files).forEach(file => {
-      this.imageFiles.push(file);
-
       const reader = new FileReader();
       reader.onload = (e: any) => {
-        this.imagePreviews.push(e.target.result);
+        this.imageItems.push({
+          preview: e.target.result,
+          source: file,
+          isOriginal: false
+        });
       };
       reader.readAsDataURL(file);
     });
   }
 
   removeImage(index: number): void {
-    // If the removed index refers to an original image
-    if (index < this.originalImages.length) {
-      const removed = this.originalImages.splice(index, 1)[0];
-      if (removed) this.deleteImage.push(removed);
-      this.imagePreviews.splice(index, 1);
-    } else {
-      // New image
-      const newIndex = index - this.originalImages.length;
-      this.imageFiles.splice(newIndex, 1);
-      this.imagePreviews.splice(index, 1);
+    const item = this.imageItems[index];
+    if (item.isOriginal) {
+      this.deleteImage.push(item.source as string);
     }
+    this.imageItems.splice(index, 1);
+  }
+
+  dropImage(event: CdkDragDrop<any[]>): void {
+    moveItemInArray(this.imageItems, event.previousIndex, event.currentIndex);
   }
 
   // Size guide handling

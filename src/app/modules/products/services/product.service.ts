@@ -111,22 +111,22 @@ export class ProductService{
         // Do not stringify because it will drop File objects. Work on a shallow clone.
         const productCopy: any = { ...editedProduct };
 
-        const existingImages: string[] = Array.isArray(editedProduct.images) ? [...editedProduct.images] : [];
         const deleteImages: string[] = Array.isArray(editedProduct.deleteImages) ? editedProduct.deleteImages : [];
 
-        // Upload new main images (editedProduct.newImages)
-        const uploadedNew: string[] = [];
-        if (editedProduct.newImages && Array.isArray(editedProduct.newImages)) {
-            for (const img of editedProduct.newImages) {
+        // Process images in order, preserving the user's arrangement
+        const finalImages: string[] = [];
+        if (editedProduct.images && Array.isArray(editedProduct.images)) {
+            for (const img of editedProduct.images) {
                 if (img instanceof File) {
+                    // Upload new file and add URL to final array
                     const response = await this.imageService.uploadImage(img).toPromise();
-                    uploadedNew.push(response?.path || response?.url || "");
+                    finalImages.push(response?.path || response?.url || "");
+                } else if (typeof img === 'string' && !deleteImages.includes(img)) {
+                    // Keep existing URL if not deleted
+                    finalImages.push(img);
                 }
             }
         }
-
-        // Merge existing images excluding deletes, then append uploaded new images
-        const finalImages = existingImages.filter(i => !deleteImages.includes(i)).concat(uploadedNew);
         productCopy.images = finalImages;
 
         // Upload variation images if present

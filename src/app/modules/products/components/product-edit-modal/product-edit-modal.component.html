@@ -42,9 +42,12 @@
             style="display: none;"
           />
           
-          <div class="image-grid" *ngIf="imagePreviews.length > 0">
-            <div class="image-item" *ngFor="let preview of imagePreviews; let i = index">
+          <div class="image-grid" *ngIf="imagePreviews.length > 0" cdkDropList cdkDropListOrientation="horizontal" (cdkDropListDropped)="dropImage($event)">
+            <div class="image-item" *ngFor="let preview of imagePreviews; let i = index" cdkDrag>
               <img [src]="preview" alt="Preview" />
+              <div class="drag-handle" cdkDragHandle>
+                <mat-icon>drag_indicator</mat-icon>
+              </div>
               <div class="image-overlay">
                 <button mat-icon-button class="delete-btn" (click)="removeImage(i)">
                   <mat-icon>delete</mat-icon>
