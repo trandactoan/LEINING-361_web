@@ -1,5 +1,5 @@
 // product-create-modal.component.ts
-import { Component, OnInit, Inject, ViewChildren, QueryList, ElementRef } from '@angular/core';
+import { Component, OnInit, Inject, ViewChild, ViewChildren, QueryList, ElementRef } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -35,6 +35,7 @@ export interface Product {
   sku?: string;
   hasVariants?: boolean;
   variants?: ProductVariant[];
+  soldCount?: number;
 }
 
 @Component({
@@ -69,7 +70,8 @@ export class ProductCreateModalComponent implements OnInit {
     stock: 0,
     sku: '',
     hasVariants: false,
-    variants: []
+    variants: [],
+    soldCount: 0
   };
 
   imagePreviews: string[] = [];
@@ -94,6 +96,9 @@ export class ProductCreateModalComponent implements OnInit {
 
   // Mock data - replace with actual data from service
   categories: CategoryDetail[] = [];
+
+  // ViewChild for image list scroll
+  @ViewChild('imageListRef') imageListRef!: ElementRef<HTMLDivElement>;
 
   // ViewChildren for detail image inputs
   @ViewChildren('detailImageInput') detailImageInputs!: QueryList<ElementRef<HTMLInputElement>>;
@@ -126,12 +131,21 @@ export class ProductCreateModalComponent implements OnInit {
   async onImagesSelected(event: Event): Promise<any> {
     const input = event.target as HTMLInputElement;
     if (input.files) {
+      const filesCount = input.files.length;
+      let loadedCount = 0;
+
       var uploadImagePromise = Array.from(input.files).map(async file => {
         this.imageFiles.push(file);
-        
+
         const reader = new FileReader();
         reader.onload = (e: any) => {
           this.imagePreviews.push(e.target.result);
+          loadedCount++;
+
+          // Scroll to bottom after all previews are loaded
+          if (loadedCount === filesCount) {
+            this.scrollImageListToBottom();
+          }
         };
         reader.readAsDataURL(file);
         const response = await this.imageService.uploadImage(file).toPromise();
@@ -139,6 +153,15 @@ export class ProductCreateModalComponent implements OnInit {
       });
       await Promise.all(uploadImagePromise);
     }
+  }
+
+  // Scroll image list to bottom to show newest images
+  private scrollImageListToBottom(): void {
+    setTimeout(() => {
+      if (this.imageListRef?.nativeElement) {
+        this.imageListRef.nativeElement.scrollTop = this.imageListRef.nativeElement.scrollHeight;
+      }
+    }, 50);
   }
 
   async removeImage(index: number): Promise<any> {
@@ -467,6 +490,7 @@ export class ProductCreateModalComponent implements OnInit {
       images: this.imageUrl,
       hasVariants: this.hasVariants,
       sizeGuide: this.sizeGuideUrl || undefined,
+      soldCount: this.newProduct.soldCount || 0,
     };
 
     if (this.hasVariants) {

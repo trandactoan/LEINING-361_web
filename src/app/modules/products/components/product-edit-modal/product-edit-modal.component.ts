@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit, AfterViewInit, ViewChildren, QueryList, ElementRef } from '@angular/core';
+import { Component, Inject, OnInit, AfterViewInit, ViewChild, ViewChildren, QueryList, ElementRef } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { CommonModule } from '@angular/common';
 import { MatDialogModule } from '@angular/material/dialog';
@@ -52,7 +52,8 @@ export class ProductEditModalComponent implements OnInit, AfterViewInit {
     hasVariants: false,
     variants: [],
     stock: 0,
-    sku: ''
+    sku: '',
+    soldCount: 0
   };
 
   categories: CategoryDetail[] = [];
@@ -89,6 +90,9 @@ export class ProductEditModalComponent implements OnInit, AfterViewInit {
 
   // Table columns
   displayedColumns: string[] = ['variant', 'price', 'originalPrice', 'stock', 'sku', 'variationImage', 'actions'];
+
+  // ViewChild for image list scroll
+  @ViewChild('imageListRef') imageListRef!: ElementRef<HTMLDivElement>;
 
   // ViewChildren for detail image inputs
   @ViewChildren('detailImageInput') detailImageInputs!: QueryList<ElementRef<HTMLInputElement>>;
@@ -129,26 +133,45 @@ export class ProductEditModalComponent implements OnInit, AfterViewInit {
     this.hasVariants = !!this.editedProduct.hasVariants;
     if (this.hasVariants) {
       this.productVariants = Array.isArray(this.editedProduct.variants) ? structuredClone(this.editedProduct.variants || []) : [];
+
+      // initialize variantOptions from existing variants if any
+      if (this.productVariants.length > 0) {
+        // Use array to preserve insertion order of option names and values
+        const optionNames: string[] = [];
+        const optionValuesMap: Record<string, string[]> = {};
+
+        this.productVariants.forEach(v => {
+          (v.attributes || []).forEach((a: any) => {
+            if (!optionValuesMap[a.name]) {
+              optionNames.push(a.name);
+              optionValuesMap[a.name] = [];
+            }
+            if (!optionValuesMap[a.name].includes(a.value)) {
+              optionValuesMap[a.name].push(a.value);
+            }
+          });
+        });
+
+        const opts = optionNames.map(name => ({
+          name,
+          values: optionValuesMap[name].map(v => ({ name: v }))
+        }));
+
+        if (opts.length > 0) {
+          this.variantOptions = opts;
+          this.newOptionValues = opts.map(() => '');
+
+          // Sort variants by options order and rebuild image previews
+          this.sortVariantsByOptions(this.productVariants, this.variantOptions);
+        }
+      }
+
+      // Set image previews after sorting
       this.productVariants.forEach((variant: any, idx: number) => {
         if (variant?.variationImage && typeof variant.variationImage === 'string') {
           this.variantImagePreviews.set(idx, variant.variationImage);
         }
       });
-      // initialize variantOptions from existing variants if any
-      if (this.productVariants.length > 0) {
-        const optionMap: Record<string, Set<string>> = {};
-        this.productVariants.forEach(v => {
-          (v.attributes || []).forEach((a: any) => {
-            optionMap[a.name] = optionMap[a.name] || new Set<string>();
-            optionMap[a.name].add(a.value);
-          });
-        });
-        const opts = Object.keys(optionMap).map(name => ({ name, values: Array.from(optionMap[name]).map(v => ({ name: v })) }));
-        if (opts.length > 0) {
-          this.variantOptions = opts;
-          this.newOptionValues = opts.map(() => '');
-        }
-      }
     }
 
     if (!this.editedProduct.details) this.editedProduct.details = [];
@@ -219,7 +242,8 @@ export class ProductEditModalComponent implements OnInit, AfterViewInit {
       hasVariants: this.hasVariants,
       sizeGuide: this.sizeGuideUrl || undefined,
       price: this.editedProduct.price,
-      originalPrice: this.editedProduct.originalPrice
+      originalPrice: this.editedProduct.originalPrice,
+      soldCount: this.editedProduct.soldCount || 0
     };
 
     if (this.hasVariants) {
@@ -256,6 +280,9 @@ export class ProductEditModalComponent implements OnInit, AfterViewInit {
     const input = event.target as HTMLInputElement;
     if (!input.files) return;
 
+    const filesCount = input.files.length;
+    let loadedCount = 0;
+
     Array.from(input.files).forEach(file => {
       const reader = new FileReader();
       reader.onload = (e: any) => {
@@ -264,9 +291,24 @@ export class ProductEditModalComponent implements OnInit, AfterViewInit {
           source: file,
           isOriginal: false
         });
+        loadedCount++;
+
+        // Scroll to bottom after all images are loaded
+        if (loadedCount === filesCount) {
+          this.scrollImageListToBottom();
+        }
       };
       reader.readAsDataURL(file);
     });
+  }
+
+  // Scroll image list to bottom to show newest images
+  private scrollImageListToBottom(): void {
+    setTimeout(() => {
+      if (this.imageListRef?.nativeElement) {
+        this.imageListRef.nativeElement.scrollTop = this.imageListRef.nativeElement.scrollHeight;
+      }
+    }, 50);
   }
 
   removeImage(index: number): void {
@@ -349,9 +391,78 @@ export class ProductEditModalComponent implements OnInit, AfterViewInit {
     const validOptions = this.variantOptions.filter(opt => opt.name && opt.values && opt.values.length > 0);
     if (validOptions.length === 0) {
       this.productVariants = [];
+      this.variantImagePreviews.clear();
       return;
     }
-    this.productVariants = this.generateVariantCombinations(validOptions);
+
+    // Save existing variants data keyed by attribute combination string
+    const existingVariantsMap = new Map<string, any>();
+    const existingPreviewsMap = new Map<string, string>();
+
+    this.productVariants.forEach((variant, idx) => {
+      const key = this.getVariantAttributeKey(variant.attributes);
+      existingVariantsMap.set(key, variant);
+      const preview = this.variantImagePreviews.get(idx);
+      if (preview) {
+        existingPreviewsMap.set(key, preview);
+      }
+    });
+
+    // Generate new combinations and preserve existing data
+    const newVariants = this.generateVariantCombinations(validOptions, existingVariantsMap);
+
+    // Sort variants by category order (first by option 1 values, then by option 2 values)
+    this.sortVariantsByOptions(newVariants, validOptions);
+
+    // Rebuild the image previews map with new indices
+    const newPreviews = new Map<number, string>();
+    newVariants.forEach((variant, idx) => {
+      const key = this.getVariantAttributeKey(variant.attributes);
+      const existingPreview = existingPreviewsMap.get(key);
+      if (existingPreview) {
+        newPreviews.set(idx, existingPreview);
+      } else if (variant.variationImage && typeof variant.variationImage === 'string') {
+        newPreviews.set(idx, variant.variationImage);
+      }
+    });
+
+    this.productVariants = newVariants;
+    this.variantImagePreviews = newPreviews;
+  }
+
+  // Helper to create a unique key from variant attributes
+  private getVariantAttributeKey(attributes: { name: string; value: string }[]): string {
+    if (!attributes || attributes.length === 0) return '';
+    return attributes
+      .map(attr => `${attr.name}:${attr.value}`)
+      .sort()
+      .join('|');
+  }
+
+  // Sort variants by the order of values in variantOptions
+  private sortVariantsByOptions(variants: any[], options: { name: string; values: { name: string }[] }[]): void {
+    // Create map: optionName -> (valueName -> index)
+    const orderMap = new Map<string, Map<string, number>>();
+    options.forEach(opt => {
+      const valueMap = new Map<string, number>();
+      opt.values.forEach((val, valIdx) => valueMap.set(val.name, valIdx));
+      orderMap.set(opt.name, valueMap);
+    });
+
+    variants.sort((a, b) => {
+      // Compare by each attribute in order
+      for (let i = 0; i < options.length; i++) {
+        const optName = options[i].name;
+        const aAttr = a.attributes?.find((attr: any) => attr.name === optName);
+        const bAttr = b.attributes?.find((attr: any) => attr.name === optName);
+
+        const aIdx = aAttr ? (orderMap.get(optName)?.get(aAttr.value) ?? 999) : 999;
+        const bIdx = bAttr ? (orderMap.get(optName)?.get(bAttr.value) ?? 999) : 999;
+
+        if (aIdx !== bIdx) return aIdx - bIdx;
+      }
+      return 0;
+    });
   }
 
   // alias to match create modal API
@@ -381,12 +492,37 @@ export class ProductEditModalComponent implements OnInit, AfterViewInit {
     this.variantImagePreviews = newPreviews;
   }
 
-  generateVariantCombinations(options: { name: string; values: { name: string }[] }[]): any[] {
+  generateVariantCombinations(options: { name: string; values: { name: string }[] }[], existingVariantsMap?: Map<string, any>): any[] {
     if (!options || options.length === 0) return [];
     const combinations: any[] = [];
     const generate = (index: number, current: any[]) => {
       if (index === options.length) {
-        combinations.push({ attributes: [...current], price: this.editedProduct.price || 0, originalPrice: this.editedProduct.originalPrice || 0, stock: 0, sku: '', variationImage: undefined });
+        const attributes = [...current];
+        const key = this.getVariantAttributeKey(attributes);
+        const existingVariant = existingVariantsMap?.get(key);
+
+        if (existingVariant) {
+          // Preserve existing variant data
+          combinations.push({
+            id: existingVariant.id,
+            attributes,
+            price: existingVariant.price,
+            originalPrice: existingVariant.originalPrice,
+            stock: existingVariant.stock,
+            sku: existingVariant.sku,
+            variationImage: existingVariant.variationImage
+          });
+        } else {
+          // Create new variant with default values
+          combinations.push({
+            attributes,
+            price: this.editedProduct.price || 0,
+            originalPrice: this.editedProduct.originalPrice || 0,
+            stock: 0,
+            sku: '',
+            variationImage: undefined
+          });
+        }
         return;
       }
       const option = options[index];
@@ -497,23 +633,42 @@ export class ProductEditModalComponent implements OnInit, AfterViewInit {
     }
   }
 
-  // Variation image handling
-  onVariationImageSelected(event: Event, variantIndex: number): void {
+  // Variation image handling - uploads immediately when selected
+  async onVariationImageSelected(event: Event, variantIndex: number): Promise<void> {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files[0]) {
       const file = input.files[0];
-      // store File on the variant for upload
       if (!this.productVariants[variantIndex]) return;
-      this.productVariants[variantIndex].variationImage = file;
 
+      // Show base64 preview immediately while uploading
       const reader = new FileReader();
       reader.onload = (e: any) => {
         const preview = e.target.result as string;
         this.variantImagePreviews.set(variantIndex, preview);
-        // also set on the variant for template parity with create modal
         this.productVariants[variantIndex].variationImagePreview = preview;
       };
       reader.readAsDataURL(file);
+
+      try {
+        // Upload image immediately
+        const response = await this.imageService.uploadImage(file).toPromise();
+        const imageUrl = response?.path || response?.url;
+
+        if (imageUrl) {
+          // Store the uploaded URL instead of the File object
+          this.productVariants[variantIndex].variationImage = imageUrl;
+          // Update preview to use the actual URL
+          this.variantImagePreviews.set(variantIndex, imageUrl);
+        }
+      } catch (error) {
+        console.error('Failed to upload variation image:', error);
+        // On error, clear the preview
+        this.variantImagePreviews.delete(variantIndex);
+        this.productVariants[variantIndex].variationImage = undefined;
+      }
+
+      // Reset input to allow re-selecting the same file
+      input.value = '';
     }
   }
 
@@ -525,7 +680,15 @@ export class ProductEditModalComponent implements OnInit, AfterViewInit {
   }
 
   getVariationImagePreview(variantIndex: number): string | undefined {
-    return  this.productVariants[variantIndex]?.variationImage
+    // Check for base64 preview first (for newly selected images being uploaded)
+    const preview = this.variantImagePreviews.get(variantIndex);
+    if (preview) return preview;
+
+    // Check if variationImage is a string URL (already uploaded)
+    const variationImage = this.productVariants[variantIndex]?.variationImage;
+    if (typeof variationImage === 'string') return variationImage;
+
+    return undefined;
   }
 
   trackByIndex(index: number): number { return index; }

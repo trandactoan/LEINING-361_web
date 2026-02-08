@@ -42,22 +42,26 @@
             style="display: none;"
           />
           
-          <div class="image-grid" *ngIf="imagePreviews.length > 0" cdkDropList cdkDropListOrientation="horizontal" (cdkDropListDropped)="dropImage($event)">
-            <div class="image-item" *ngFor="let preview of imagePreviews; let i = index" cdkDrag>
-              <img [src]="preview" alt="Preview" />
+          <div class="image-list" #imageListRef *ngIf="imagePreviews.length > 0" cdkDropList cdkDropListOrientation="vertical" (cdkDropListDropped)="dropImage($event)">
+            <div class="image-list-item" *ngFor="let preview of imagePreviews; let i = index" cdkDrag>
               <div class="drag-handle" cdkDragHandle>
                 <mat-icon>drag_indicator</mat-icon>
               </div>
-              <div class="image-overlay">
-                <button mat-icon-button class="delete-btn" (click)="removeImage(i)">
-                  <mat-icon>delete</mat-icon>
-                </button>
+              <div class="image-thumbnail">
+                <img [src]="preview" alt="Preview" />
               </div>
+              <div class="image-info">
+                <span class="image-index">Ảnh {{ i + 1 }}</span>
+                <span class="image-hint" *ngIf="i === 0">Ảnh bìa</span>
+              </div>
+              <button mat-icon-button class="delete-btn" (click)="removeImage(i)">
+                <mat-icon>delete</mat-icon>
+              </button>
             </div>
-            <div class="add-more-btn" (click)="fileInput.click()">
-              <mat-icon>add_photo_alternate</mat-icon>
-              <span>Thêm ảnh</span>
-            </div>
+          </div>
+          <div class="add-image-btn" *ngIf="imagePreviews.length > 0" (click)="fileInput.click()">
+            <mat-icon>add_photo_alternate</mat-icon>
+            <span>Thêm ảnh</span>
           </div>
 
           <div class="empty-upload" *ngIf="imagePreviews.length === 0" (click)="fileInput.click()">
@@ -181,6 +185,11 @@
             <input matInput type="number" [(ngModel)]="editedProduct.originalPrice" placeholder="0" />
             <span matTextSuffix>₫&nbsp;</span>
             <mat-hint *ngIf="getDiscount() > 0">Giảm {{ getDiscount() }}%</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="form-field">
+            <mat-label>Số lượng bán</mat-label>
+            <input matInput type="number" [(ngModel)]="editedProduct.soldCount" placeholder="0" />
           </mat-form-field>
         </div>
     </section>

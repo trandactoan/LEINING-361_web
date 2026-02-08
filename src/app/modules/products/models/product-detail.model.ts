@@ -13,7 +13,8 @@ export interface ProductDetail{
     variants?: ProductVariation[],
     sizeGuide?: string,
     sku?: string,
-    stock?: number
+    stock?: number,
+    soldCount?: number
 }
 
 export interface DetailContent{
