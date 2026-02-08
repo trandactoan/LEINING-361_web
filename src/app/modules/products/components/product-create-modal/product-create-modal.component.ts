@@ -92,7 +92,7 @@ export class ProductCreateModalComponent implements OnInit {
   variantImagePreviews: Map<number, string> = new Map(); // Store base64 previews by variant index
   
   // Table columns
-  displayedColumns: string[] = ['variant', 'price', 'originalPrice', 'stock', 'sku', 'variationImage', 'actions'];
+  displayedColumns: string[] = ['variant', 'price', 'originalPrice', 'stock', 'soldCount', 'sku', 'variationImage', 'actions'];
 
   // Mock data - replace with actual data from service
   categories: CategoryDetail[] = [];
@@ -376,6 +376,7 @@ export class ProductCreateModalComponent implements OnInit {
           price: this.newProduct.price || 0,
           originalPrice: this.newProduct.originalPrice || 0,
           stock: 0,
+          soldCount: 0,
           sku: '',
           variationImage: undefined,
           variationImagePreview: undefined
@@ -500,6 +501,7 @@ export class ProductCreateModalComponent implements OnInit {
         price: variant.price,
         originalPrice: variant.originalPrice,
         stock: variant.stock,
+        soldCount: variant.soldCount || 0,
         sku: variant.sku,
         variationImage: variant.variationImage
       }));

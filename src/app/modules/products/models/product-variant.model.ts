@@ -8,6 +8,7 @@ export interface ProductVariant {
   price: number;
   originalPrice?: number;
   stock: number;
+  soldCount?: number;
   sku: string;
   variationImage?: string; // File object or URL
   variationImagePreview?: string; // Base64 or data URL for preview

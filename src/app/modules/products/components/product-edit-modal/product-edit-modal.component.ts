@@ -89,7 +89,7 @@ export class ProductEditModalComponent implements OnInit, AfterViewInit {
   newOptionValues: string[] = [''];
 
   // Table columns
-  displayedColumns: string[] = ['variant', 'price', 'originalPrice', 'stock', 'sku', 'variationImage', 'actions'];
+  displayedColumns: string[] = ['variant', 'price', 'originalPrice', 'stock', 'soldCount', 'sku', 'variationImage', 'actions'];
 
   // ViewChild for image list scroll
   @ViewChild('imageListRef') imageListRef!: ElementRef<HTMLDivElement>;
@@ -253,6 +253,7 @@ export class ProductEditModalComponent implements OnInit, AfterViewInit {
         price: v.price,
         originalPrice: v.originalPrice,
         stock: v.stock,
+        soldCount: v.soldCount || 0,
         sku: v.sku,
         variationImage: v.variationImage instanceof File ? v.variationImage : v.variationImage
       }));
@@ -509,6 +510,7 @@ export class ProductEditModalComponent implements OnInit, AfterViewInit {
             price: existingVariant.price,
             originalPrice: existingVariant.originalPrice,
             stock: existingVariant.stock,
+            soldCount: existingVariant.soldCount || 0,
             sku: existingVariant.sku,
             variationImage: existingVariant.variationImage
           });
@@ -519,6 +521,7 @@ export class ProductEditModalComponent implements OnInit, AfterViewInit {
             price: this.editedProduct.price || 0,
             originalPrice: this.editedProduct.originalPrice || 0,
             stock: 0,
+            soldCount: 0,
             sku: '',
             variationImage: undefined
           });
