@@ -209,17 +209,20 @@
           <div *ngFor="let option of variantOptions; let i = index" class="variant-option">
             <div class="option-header">
               <mat-form-field appearance="outline" class="option-name">
-                <mat-label>Nhóm phân loại {{ i + 1 }}</mat-label>
-                <input 
-                  matInput 
-                  [(ngModel)]="option.name" 
-                  placeholder="VD: Màu sắc, Kích thước"
-                  (blur)="updateVariants()"
-                />
+                <mat-label>Loại phân loại {{ i + 1 }}</mat-label>
+                <mat-select [(ngModel)]="option.name" (ngModelChange)="updateVariants()">
+                  <mat-option *ngFor="let type of getAvailableVariantTypes(i)" [value]="type">
+                    {{ type }}
+                  </mat-option>
+                  <!-- Keep current value visible if already selected -->
+                  <mat-option *ngIf="option.name && !getAvailableVariantTypes(i).includes(option.name)" [value]="option.name">
+                    {{ option.name }}
+                  </mat-option>
+                </mat-select>
               </mat-form-field>
-              <button 
-                mat-icon-button 
-                color="warn" 
+              <button
+                mat-icon-button
+                color="warn"
                 (click)="removeVariantOption(i)"
                 *ngIf="variantOptions.length > 1"
               >
@@ -259,15 +262,51 @@
             </div>
           </div>
 
-          <button 
-            mat-stroked-button 
+          <button
+            mat-stroked-button
             (click)="addVariantOption()"
             class="add-btn"
-            *ngIf="variantOptions.length < 2"
+            *ngIf="variantOptions.length < 3"
           >
             <mat-icon>add</mat-icon>
             Thêm nhóm phân loại {{ variantOptions.length + 1 }}
           </button>
+        </div>
+
+        <!-- Auto-fill Template -->
+        <div class="auto-fill-template" *ngIf="productVariants.length > 0">
+          <div class="template-header">
+            <h4>Điền nhanh giá trị</h4>
+            <span class="template-hint">Điền giá trị mẫu và nhấn nút để áp dụng cho các ô trống</span>
+          </div>
+          <div class="template-inputs">
+            <mat-form-field appearance="outline" class="template-input">
+              <mat-label>Giá</mat-label>
+              <input matInput type="number" [(ngModel)]="variantTemplate.price" />
+              <span matTextSuffix>₫&nbsp;</span>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="template-input">
+              <mat-label>Giá gốc</mat-label>
+              <input matInput type="number" [(ngModel)]="variantTemplate.originalPrice" />
+              <span matTextSuffix>₫&nbsp;</span>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="template-input">
+              <mat-label>Kho hàng</mat-label>
+              <input matInput type="number" [(ngModel)]="variantTemplate.stock" />
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="template-input">
+              <mat-label>Đã bán</mat-label>
+              <input matInput type="number" [(ngModel)]="variantTemplate.soldCount" />
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="template-input">
+              <mat-label>SKU</mat-label>
+              <input matInput [(ngModel)]="variantTemplate.sku" placeholder="Mã SKU" />
+            </mat-form-field>
+            <button mat-raised-button color="primary" (click)="fillEmptyVariantValues()" class="fill-btn">
+              <mat-icon>auto_fix_high</mat-icon>
+              Điền giá trị trống
+            </button>
+          </div>
         </div>
 
         <!-- Variant List Table -->

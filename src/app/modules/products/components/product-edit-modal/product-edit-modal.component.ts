@@ -88,8 +88,20 @@ export class ProductEditModalComponent implements OnInit, AfterViewInit {
   variantOptions: { name: string; values: { name: string }[] }[] = [ { name: '', values: [] } ];
   newOptionValues: string[] = [''];
 
+  // Predefined variant types
+  variantTypes: string[] = ['Kích thước', 'Màu', 'Giới tính'];
+
   // Table columns
   displayedColumns: string[] = ['variant', 'price', 'originalPrice', 'stock', 'soldCount', 'sku', 'variationImage', 'actions'];
+
+  // Template for auto-fill
+  variantTemplate = {
+    price: 0,
+    originalPrice: 0,
+    stock: 0,
+    soldCount: 0,
+    sku: ''
+  };
 
   // ViewChild for image list scroll
   @ViewChild('imageListRef') imageListRef!: ElementRef<HTMLDivElement>;
@@ -361,11 +373,20 @@ export class ProductEditModalComponent implements OnInit, AfterViewInit {
 
   // Variant option management (from create modal)
   addVariantOption(): void {
-    if (this.variantOptions.length < 2) {
+    if (this.variantOptions.length < 3) {
       this.variantOptions.push({ name: '', values: [] });
       this.newOptionValues.push('');
       this.updateVariantsFromOptions();
     }
+  }
+
+  // Get available variant types (exclude already selected ones)
+  getAvailableVariantTypes(currentIndex: number): string[] {
+    const selectedTypes = this.variantOptions
+      .filter((_, i) => i !== currentIndex)
+      .map(opt => opt.name)
+      .filter(name => name);
+    return this.variantTypes.filter(type => !selectedTypes.includes(type));
   }
 
   removeVariantOption(index: number): void {
@@ -474,6 +495,32 @@ export class ProductEditModalComponent implements OnInit, AfterViewInit {
   applyToAllVariants(): void {
     const price = this.editedProduct.price || 0;
     this.productVariants.forEach(v => v.price = price);
+  }
+
+  // Fill empty variant values from template
+  fillEmptyVariantValues(): void {
+    this.productVariants.forEach(variant => {
+      // Fill price if empty or 0
+      if (!variant.price && this.variantTemplate.price) {
+        variant.price = this.variantTemplate.price;
+      }
+      // Fill originalPrice if empty or 0
+      if (!variant.originalPrice && this.variantTemplate.originalPrice) {
+        variant.originalPrice = this.variantTemplate.originalPrice;
+      }
+      // Fill stock if empty or 0
+      if (!variant.stock && this.variantTemplate.stock) {
+        variant.stock = this.variantTemplate.stock;
+      }
+      // Fill soldCount if empty or 0
+      if (!variant.soldCount && this.variantTemplate.soldCount) {
+        variant.soldCount = this.variantTemplate.soldCount;
+      }
+      // Fill sku if empty
+      if (!variant.sku && this.variantTemplate.sku) {
+        variant.sku = this.variantTemplate.sku;
+      }
+    });
   }
 
   removeVariant(index: number): void {

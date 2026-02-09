@@ -90,9 +90,21 @@ export class ProductCreateModalComponent implements OnInit {
   productVariants: ProductVariant[] = [];
   newOptionValues: string[] = [''];
   variantImagePreviews: Map<number, string> = new Map(); // Store base64 previews by variant index
+
+  // Predefined variant types
+  variantTypes: string[] = ['Kích thước', 'Màu', 'Giới tính'];
   
   // Table columns
   displayedColumns: string[] = ['variant', 'price', 'originalPrice', 'stock', 'soldCount', 'sku', 'variationImage', 'actions'];
+
+  // Template for auto-fill
+  variantTemplate = {
+    price: 0,
+    originalPrice: 0,
+    stock: 0,
+    soldCount: 0,
+    sku: ''
+  };
 
   // Mock data - replace with actual data from service
   categories: CategoryDetail[] = [];
@@ -308,10 +320,19 @@ export class ProductCreateModalComponent implements OnInit {
 
   // Variant options management
   addVariantOption(): void {
-    if (this.variantOptions.length < 2) {
+    if (this.variantOptions.length < 3) {
       this.variantOptions.push({ name: '', values: [] });
       this.newOptionValues.push('');
     }
+  }
+
+  // Get available variant types (exclude already selected ones)
+  getAvailableVariantTypes(currentIndex: number): string[] {
+    const selectedTypes = this.variantOptions
+      .filter((_, i) => i !== currentIndex)
+      .map(opt => opt.name)
+      .filter(name => name);
+    return this.variantTypes.filter(type => !selectedTypes.includes(type));
   }
 
   removeVariantOption(index: number): void {
@@ -401,6 +422,32 @@ export class ProductCreateModalComponent implements OnInit {
     const price = this.newProduct.price || 0;
     this.productVariants.forEach(variant => {
       variant.price = price;
+    });
+  }
+
+  // Fill empty variant values from template
+  fillEmptyVariantValues(): void {
+    this.productVariants.forEach(variant => {
+      // Fill price if empty or 0
+      if (!variant.price && this.variantTemplate.price) {
+        variant.price = this.variantTemplate.price;
+      }
+      // Fill originalPrice if empty or 0
+      if (!variant.originalPrice && this.variantTemplate.originalPrice) {
+        variant.originalPrice = this.variantTemplate.originalPrice;
+      }
+      // Fill stock if empty or 0
+      if (!variant.stock && this.variantTemplate.stock) {
+        variant.stock = this.variantTemplate.stock;
+      }
+      // Fill soldCount if empty or 0
+      if (!variant.soldCount && this.variantTemplate.soldCount) {
+        variant.soldCount = this.variantTemplate.soldCount;
+      }
+      // Fill sku if empty
+      if (!variant.sku && this.variantTemplate.sku) {
+        variant.sku = this.variantTemplate.sku;
+      }
     });
   }
 

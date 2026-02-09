@@ -214,9 +214,17 @@
       <!-- Variant Options Builder (like create modal) -->
       <div class="variant-options" style="margin-top:16px;">
         <div class="options-list" *ngFor="let opt of variantOptions; let oi = index" style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-          <mat-form-field appearance="outline" class="option-name" style="flex:1;">
-            <mat-label>Tên thuộc tính</mat-label>
-            <input matInput [(ngModel)]="variantOptions[oi].name" (ngModelChange)="updateVariantsFromOptions()" placeholder="VD: Màu" />
+          <mat-form-field appearance="outline" class="option-name" style="flex:1; min-width:150px;">
+            <mat-label>Loại phân loại</mat-label>
+            <mat-select [(ngModel)]="variantOptions[oi].name" (ngModelChange)="updateVariantsFromOptions()">
+              <mat-option *ngFor="let type of getAvailableVariantTypes(oi)" [value]="type">
+                {{ type }}
+              </mat-option>
+              <!-- Keep current value visible if already selected -->
+              <mat-option *ngIf="variantOptions[oi].name && !getAvailableVariantTypes(oi).includes(variantOptions[oi].name)" [value]="variantOptions[oi].name">
+                {{ variantOptions[oi].name }}
+              </mat-option>
+            </mat-select>
           </mat-form-field>
 
           <div class="option-values" style="flex:2; display:flex; gap:8px; align-items:center;">
@@ -247,6 +255,42 @@
         <div class="options-actions">
           <button mat-stroked-button color="primary" (click)="addVariantOption()" [disabled]="variantOptions.length >= 3">
             <mat-icon>add</mat-icon> Thêm thuộc tính
+          </button>
+        </div>
+      </div>
+
+      <!-- Auto-fill Template -->
+      <div class="auto-fill-template" *ngIf="productVariants.length > 0">
+        <div class="template-header">
+          <h4>Điền nhanh giá trị</h4>
+          <span class="template-hint">Điền giá trị mẫu và nhấn nút để áp dụng cho các ô trống</span>
+        </div>
+        <div class="template-inputs">
+          <mat-form-field appearance="outline" class="template-input">
+            <mat-label>Giá</mat-label>
+            <input matInput type="number" [(ngModel)]="variantTemplate.price" />
+            <span matTextSuffix>₫&nbsp;</span>
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="template-input">
+            <mat-label>Giá gốc</mat-label>
+            <input matInput type="number" [(ngModel)]="variantTemplate.originalPrice" />
+            <span matTextSuffix>₫&nbsp;</span>
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="template-input">
+            <mat-label>Kho hàng</mat-label>
+            <input matInput type="number" [(ngModel)]="variantTemplate.stock" />
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="template-input">
+            <mat-label>Đã bán</mat-label>
+            <input matInput type="number" [(ngModel)]="variantTemplate.soldCount" />
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="template-input">
+            <mat-label>SKU</mat-label>
+            <input matInput [(ngModel)]="variantTemplate.sku" placeholder="Mã SKU" />
+          </mat-form-field>
+          <button mat-raised-button color="primary" (click)="fillEmptyVariantValues()" class="fill-btn">
+            <mat-icon>auto_fix_high</mat-icon>
+            Điền giá trị trống
           </button>
         </div>
       </div>
