@@ -107,6 +107,11 @@ export class ProductCreateModalComponent implements OnInit {
     stock: 0,
     sku: ''
   };
+  variantTemplateImage: string = ''; // URL of uploaded template image
+  variantTemplateImagePreview: string = ''; // Preview for display
+
+  // Filter for auto-fill (values from first variant option - supports multiple selection)
+  selectedFillFilters: string[] = [];
 
   // Mock data - replace with actual data from service
   categories: CategoryDetail[] = [];
@@ -510,9 +515,58 @@ export class ProductCreateModalComponent implements OnInit {
     });
   }
 
+  // Get values from the first variant option for the fill filter dropdown
+  getFirstOptionValues(): string[] {
+    if (this.variantOptions.length > 0 && this.variantOptions[0].values.length > 0) {
+      return this.variantOptions[0].values.map(v => v.name);
+    }
+    return [];
+  }
+
+  // Template image handling
+  async onTemplateImageSelected(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+
+      // Show preview immediately
+      const reader = new FileReader();
+      reader.onload = (e: any) => {
+        this.variantTemplateImagePreview = e.target.result;
+      };
+      reader.readAsDataURL(file);
+
+      // Upload the image
+      try {
+        const response = await this.imageService.uploadImage(file).toPromise();
+        this.variantTemplateImage = response?.path || response?.url || '';
+      } catch (error) {
+        console.error('Failed to upload template image:', error);
+        this.variantTemplateImagePreview = '';
+      }
+
+      input.value = '';
+    }
+  }
+
+  removeTemplateImage(): void {
+    this.variantTemplateImage = '';
+    this.variantTemplateImagePreview = '';
+  }
+
   // Fill empty variant values from template
   fillEmptyVariantValues(): void {
-    this.productVariants.forEach(variant => {
+    const firstOptionName = this.variantOptions.length > 0 ? this.variantOptions[0].name : '';
+
+    this.productVariants.forEach((variant, index) => {
+      // If filters are selected, only apply to variants matching one of the selected filters
+      if (this.selectedFillFilters.length > 0 && firstOptionName) {
+        const firstAttr = variant.attributes?.find((attr: any) => attr.name === firstOptionName);
+        if (!firstAttr || !this.selectedFillFilters.includes(firstAttr.value)) {
+          return; // Skip this variant
+        }
+      }
+
       // Fill price if empty or 0
       if (!variant.price && this.variantTemplate.price) {
         variant.price = this.variantTemplate.price;
@@ -528,6 +582,11 @@ export class ProductCreateModalComponent implements OnInit {
       // Fill sku if empty
       if (!variant.sku && this.variantTemplate.sku) {
         variant.sku = this.variantTemplate.sku;
+      }
+      // Fill variationImage if empty
+      if (!variant.variationImage && this.variantTemplateImage) {
+        variant.variationImage = this.variantTemplateImage;
+        this.variantImagePreviews.set(index, this.variantTemplateImage);
       }
     });
   }
@@ -586,12 +645,51 @@ export class ProductCreateModalComponent implements OnInit {
 
   // Pricing helpers
   getDiscount(): number {
-    if (!this.newProduct.originalPrice || !this.newProduct.price) {
+    const price = this.getDisplayPrice();
+    const originalPrice = this.getDisplayOriginalPrice();
+    if (!originalPrice || !price) {
       return 0;
     }
-    const discount = ((this.newProduct.originalPrice - this.newProduct.price) / 
-                     this.newProduct.originalPrice) * 100;
+    const discount = ((originalPrice - price) / originalPrice) * 100;
     return Math.round(discount);
+  }
+
+  // Get the lowest variant price (for display when hasVariants is true)
+  getLowestVariantPrice(): number {
+    if (!this.productVariants || this.productVariants.length === 0) {
+      return 0;
+    }
+    const prices = this.productVariants
+      .map(v => v.price)
+      .filter(p => p !== undefined && p !== null && p > 0);
+    return prices.length > 0 ? Math.min(...prices) : 0;
+  }
+
+  // Get the lowest variant original price (for display when hasVariants is true)
+  getLowestVariantOriginalPrice(): number {
+    if (!this.productVariants || this.productVariants.length === 0) {
+      return 0;
+    }
+    const prices = this.productVariants
+      .map(v => v.originalPrice)
+      .filter((p): p is number => p !== undefined && p !== null && p > 0);
+    return prices.length > 0 ? Math.min(...prices) : 0;
+  }
+
+  // Get the display price (lowest variant price if hasVariants, otherwise newProduct.price)
+  getDisplayPrice(): number {
+    if (this.hasVariants && this.productVariants.length > 0) {
+      return this.getLowestVariantPrice();
+    }
+    return this.newProduct.price || 0;
+  }
+
+  // Get the display original price
+  getDisplayOriginalPrice(): number {
+    if (this.hasVariants && this.productVariants.length > 0) {
+      return this.getLowestVariantOriginalPrice();
+    }
+    return this.newProduct.originalPrice || 0;
   }
 
   // Modal actions
@@ -610,10 +708,14 @@ export class ProductCreateModalComponent implements OnInit {
   }
 
   private prepareProductData(): any {
+    // Use lowest variant prices when hasVariants is true
+    const finalPrice = this.hasVariants ? this.getLowestVariantPrice() : this.newProduct.price;
+    const finalOriginalPrice = this.hasVariants ? this.getLowestVariantOriginalPrice() : this.newProduct.originalPrice;
+
     let product: any = {
       name: this.newProduct.name,
-      price: this.newProduct.price,
-      originalPrice: this.newProduct.originalPrice,
+      price: finalPrice,
+      originalPrice: finalOriginalPrice,
       categoryId: this.newProduct.categoryId,
       details: this.newProduct.details,
       images: this.imageUrl,
@@ -641,8 +743,6 @@ export class ProductCreateModalComponent implements OnInit {
         }));
     } else {
       // For non-variant products, keep price and originalPrice
-      product.price = this.newProduct.price;
-      product.originalPrice = this.newProduct.originalPrice;
       product.stock = this.newProduct.stock;
       product.sku = this.newProduct.sku;
       delete product.variants;

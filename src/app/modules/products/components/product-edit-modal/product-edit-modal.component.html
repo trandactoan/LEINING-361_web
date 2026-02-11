@@ -180,15 +180,25 @@
         <div class="form-row">
           <mat-form-field appearance="outline" class="form-field">
             <mat-label>Giá bán</mat-label>
-            <input matInput type="number" [(ngModel)]="editedProduct.price" placeholder="0" />
+            <input matInput type="number"
+              [ngModel]="hasVariants ? getDisplayPrice() : editedProduct.price"
+              (ngModelChange)="!hasVariants && (editedProduct.price = $event)"
+              [disabled]="hasVariants"
+              placeholder="0" />
             <span matTextSuffix>₫&nbsp;</span>
+            <mat-hint *ngIf="hasVariants">Tự động từ giá thấp nhất</mat-hint>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="form-field">
             <mat-label>Giá gốc (tùy chọn)</mat-label>
-            <input matInput type="number" [(ngModel)]="editedProduct.originalPrice" placeholder="0" />
+            <input matInput type="number"
+              [ngModel]="hasVariants ? getDisplayOriginalPrice() : editedProduct.originalPrice"
+              (ngModelChange)="!hasVariants && (editedProduct.originalPrice = $event)"
+              [disabled]="hasVariants"
+              placeholder="0" />
             <span matTextSuffix>₫&nbsp;</span>
-            <mat-hint *ngIf="getDiscount() > 0">Giảm {{ getDiscount() }}%</mat-hint>
+            <mat-hint *ngIf="!hasVariants && getDiscount() > 0">Giảm {{ getDiscount() }}%</mat-hint>
+            <mat-hint *ngIf="hasVariants && getDiscount() > 0">Giảm {{ getDiscount() }}%</mat-hint>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="form-field">
@@ -271,6 +281,15 @@
           <span class="template-hint">Điền giá trị mẫu và nhấn nút để áp dụng cho các ô trống</span>
         </div>
         <div class="template-inputs">
+          <mat-form-field appearance="outline" class="template-input" *ngIf="getFirstOptionValues().length > 0">
+            <mat-label>Áp dụng cho</mat-label>
+            <mat-select [(ngModel)]="selectedFillFilters" multiple>
+              <mat-option *ngFor="let value of getFirstOptionValues()" [value]="value">
+                {{ variantOptions[0]?.name }}: {{ value }}
+              </mat-option>
+            </mat-select>
+            <mat-hint *ngIf="selectedFillFilters.length === 0">Để trống = Tất cả</mat-hint>
+          </mat-form-field>
           <mat-form-field appearance="outline" class="template-input">
             <mat-label>Giá</mat-label>
             <input matInput type="number" [(ngModel)]="variantTemplate.price" />
@@ -289,6 +308,25 @@
             <mat-label>SKU</mat-label>
             <input matInput [(ngModel)]="variantTemplate.sku" placeholder="Mã SKU" />
           </mat-form-field>
+          <div class="template-image-input">
+            <input
+              type="file"
+              #templateImageInput
+              accept="image/*"
+              (change)="onTemplateImageSelected($event)"
+              style="display: none;"
+            />
+            <div class="template-image-preview" *ngIf="variantTemplateImagePreview">
+              <img [src]="variantTemplateImagePreview" alt="Template image" />
+              <button mat-icon-button class="remove-template-image" (click)="removeTemplateImage()">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+            <button mat-stroked-button *ngIf="!variantTemplateImagePreview" (click)="templateImageInput.click()" class="upload-template-image-btn">
+              <mat-icon>add_photo_alternate</mat-icon>
+              Hình ảnh
+            </button>
+          </div>
           <button mat-raised-button color="primary" (click)="fillEmptyVariantValues()" class="fill-btn">
             Hoàn thành các ô trống
           </button>

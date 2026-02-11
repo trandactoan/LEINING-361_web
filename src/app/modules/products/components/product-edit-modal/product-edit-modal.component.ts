@@ -104,6 +104,11 @@ export class ProductEditModalComponent implements OnInit, AfterViewInit {
     stock: 0,
     sku: ''
   };
+  variantTemplateImage: string = ''; // URL of uploaded template image
+  variantTemplateImagePreview: string = ''; // Preview for display
+
+  // Filter for auto-fill (values from first variant option - supports multiple selection)
+  selectedFillFilters: string[] = [];
 
   // ViewChild for image list scroll
   @ViewChild('imageListRef') imageListRef!: ElementRef<HTMLDivElement>;
@@ -254,6 +259,10 @@ export class ProductEditModalComponent implements OnInit, AfterViewInit {
     // Preserve image order: map imageItems to their sources (URLs or Files)
     const orderedImages = this.imageItems.map(item => item.source);
 
+    // Use lowest variant prices when hasVariants is true
+    const finalPrice = this.hasVariants ? this.getLowestVariantPrice() : this.editedProduct.price;
+    const finalOriginalPrice = this.hasVariants ? this.getLowestVariantOriginalPrice() : this.editedProduct.originalPrice;
+
     const base: any = {
       id: this.editedProduct.id,
       name: this.editedProduct.name,
@@ -265,8 +274,8 @@ export class ProductEditModalComponent implements OnInit, AfterViewInit {
       deleteImages: [...this.deleteImage],
       hasVariants: this.hasVariants,
       sizeGuide: this.sizeGuideUrl || undefined,
-      price: this.editedProduct.price,
-      originalPrice: this.editedProduct.originalPrice,
+      price: finalPrice,
+      originalPrice: finalOriginalPrice,
       soldCount: this.editedProduct.soldCount || 0
     };
 
@@ -298,12 +307,51 @@ export class ProductEditModalComponent implements OnInit, AfterViewInit {
   }
 
   getDiscount(): number {
-    if (!this.editedProduct.originalPrice || !this.editedProduct.price) {
+    const price = this.getDisplayPrice();
+    const originalPrice = this.getDisplayOriginalPrice();
+    if (!originalPrice || !price) {
       return 0;
     }
-    const discount = ((this.editedProduct.originalPrice - this.editedProduct.price) /
-                     this.editedProduct.originalPrice) * 100;
+    const discount = ((originalPrice - price) / originalPrice) * 100;
     return Math.round(discount);
+  }
+
+  // Get the lowest variant price (for display when hasVariants is true)
+  getLowestVariantPrice(): number {
+    if (!this.productVariants || this.productVariants.length === 0) {
+      return 0;
+    }
+    const prices = this.productVariants
+      .map(v => v.price)
+      .filter(p => p !== undefined && p !== null && p > 0);
+    return prices.length > 0 ? Math.min(...prices) : 0;
+  }
+
+  // Get the lowest variant original price (for display when hasVariants is true)
+  getLowestVariantOriginalPrice(): number {
+    if (!this.productVariants || this.productVariants.length === 0) {
+      return 0;
+    }
+    const prices = this.productVariants
+      .map(v => v.originalPrice)
+      .filter(p => p !== undefined && p !== null && p > 0);
+    return prices.length > 0 ? Math.min(...prices) : 0;
+  }
+
+  // Get the display price (lowest variant price if hasVariants, otherwise editedProduct.price)
+  getDisplayPrice(): number {
+    if (this.hasVariants && this.productVariants.length > 0) {
+      return this.getLowestVariantPrice();
+    }
+    return this.editedProduct.price || 0;
+  }
+
+  // Get the display original price
+  getDisplayOriginalPrice(): number {
+    if (this.hasVariants && this.productVariants.length > 0) {
+      return this.getLowestVariantOriginalPrice();
+    }
+    return this.editedProduct.originalPrice || 0;
   }
 
   // Image selection for main images
@@ -574,9 +622,58 @@ export class ProductEditModalComponent implements OnInit, AfterViewInit {
     this.productVariants.forEach(v => v.price = price);
   }
 
+  // Get values from the first variant option for the fill filter dropdown
+  getFirstOptionValues(): string[] {
+    if (this.variantOptions.length > 0 && this.variantOptions[0].values.length > 0) {
+      return this.variantOptions[0].values.map(v => v.name);
+    }
+    return [];
+  }
+
+  // Template image handling
+  async onTemplateImageSelected(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+
+      // Show preview immediately
+      const reader = new FileReader();
+      reader.onload = (e: any) => {
+        this.variantTemplateImagePreview = e.target.result;
+      };
+      reader.readAsDataURL(file);
+
+      // Upload the image
+      try {
+        const response = await this.imageService.uploadImage(file).toPromise();
+        this.variantTemplateImage = response?.path || response?.url || '';
+      } catch (error) {
+        console.error('Failed to upload template image:', error);
+        this.variantTemplateImagePreview = '';
+      }
+
+      input.value = '';
+    }
+  }
+
+  removeTemplateImage(): void {
+    this.variantTemplateImage = '';
+    this.variantTemplateImagePreview = '';
+  }
+
   // Fill empty variant values from template
   fillEmptyVariantValues(): void {
-    this.productVariants.forEach(variant => {
+    const firstOptionName = this.variantOptions.length > 0 ? this.variantOptions[0].name : '';
+
+    this.productVariants.forEach((variant, index) => {
+      // If filters are selected, only apply to variants matching one of the selected filters
+      if (this.selectedFillFilters.length > 0 && firstOptionName) {
+        const firstAttr = variant.attributes?.find((attr: any) => attr.name === firstOptionName);
+        if (!firstAttr || !this.selectedFillFilters.includes(firstAttr.value)) {
+          return; // Skip this variant
+        }
+      }
+
       // Fill price if empty or 0
       if (!variant.price && this.variantTemplate.price) {
         variant.price = this.variantTemplate.price;
@@ -592,6 +689,11 @@ export class ProductEditModalComponent implements OnInit, AfterViewInit {
       // Fill sku if empty
       if (!variant.sku && this.variantTemplate.sku) {
         variant.sku = this.variantTemplate.sku;
+      }
+      // Fill variationImage if empty
+      if (!variant.variationImage && this.variantTemplateImage) {
+        variant.variationImage = this.variantTemplateImage;
+        this.variantImagePreviews.set(index, this.variantTemplateImage);
       }
     });
   }
