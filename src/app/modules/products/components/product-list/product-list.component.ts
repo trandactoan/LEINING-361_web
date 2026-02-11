@@ -54,6 +54,7 @@ export class ProductListComponent {
         width: '90vw',
         maxWidth: '90vw',
         maxHeight: '90vh',
+        disableClose: true,
         data: {product: product, categories: this.categories},
       });
       dialogRef.afterClosed().subscribe(result => {
@@ -76,6 +77,7 @@ export class ProductListComponent {
       width: '90vw',
       maxWidth: '90vw',
       maxHeight: '90vh',
+      disableClose: true,
       data: this.categories,
     });
     dialogRef.afterClosed().subscribe(result => {

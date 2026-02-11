@@ -231,6 +231,30 @@
   }
 }
 
+.max-images-reached {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  margin-top: 8px;
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+  border-radius: 8px;
+  color: #16a34a;
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+
+  span {
+    font-size: 14px;
+    font-weight: 500;
+  }
+}
+
 .cdk-drop-list-dragging .image-list-item:not(.cdk-drag-placeholder) {
   transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
 }
@@ -372,6 +396,36 @@
   padding: 10px;
   border-radius: 6px;
   background: #fff;
+  cursor: default;
+
+  &.cdk-drag-preview {
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  }
+
+  &.cdk-drag-placeholder {
+    opacity: 0.4;
+    background: #f3f4f6;
+    border-style: dashed;
+  }
+
+  &.cdk-drag-animating {
+    transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+  }
+}
+
+.variant-options.cdk-drop-list-dragging .variant-option:not(.cdk-drag-placeholder) {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.option-drag-handle {
+  cursor: grab;
+  color: #9ca3af;
+  display: flex;
+  align-items: center;
+
+  &:active {
+    cursor: grabbing;
+  }
 }
 
 .option-header {
@@ -390,6 +444,74 @@
   gap: 12px;
   align-items: center;
   flex-wrap: wrap;
+}
+
+// Value chips container for drag-drop
+.value-chips-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.value-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 4px 4px 12px;
+  background: #f3f4f6;
+  border-radius: 16px;
+  font-size: 14px;
+  cursor: grab;
+  user-select: none;
+  transition: box-shadow 0.2s, background 0.2s;
+
+  &:hover {
+    background: #e5e7eb;
+  }
+
+  &:active {
+    cursor: grabbing;
+  }
+
+  &.cdk-drag-preview {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    background: #fff;
+  }
+
+  &.cdk-drag-placeholder {
+    opacity: 0.4;
+    background: #d1d5db;
+  }
+
+  &.cdk-drag-animating {
+    transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+  }
+
+  .chip-text {
+    color: #374151;
+  }
+
+  .chip-remove {
+    width: 20px;
+    height: 20px;
+    line-height: 20px;
+
+    mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+      color: #9ca3af;
+    }
+
+    &:hover mat-icon {
+      color: #ef4444;
+    }
+  }
+}
+
+.value-chips-container.cdk-drop-list-dragging .value-chip:not(.cdk-drag-placeholder) {
+  transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
 }
 
 .add-value-input {
@@ -495,6 +617,12 @@
   }
 
   // Column widths
+  .mat-column-drag {
+    width: 40px;
+    min-width: 40px;
+    max-width: 40px;
+  }
+
   .mat-column-variant {
     width: 15%;
     min-width: 100px;
@@ -502,8 +630,7 @@
 
   .mat-column-price,
   .mat-column-originalPrice,
-  .mat-column-stock,
-  .mat-column-soldCount {
+  .mat-column-stock {
     width: 12%;
     min-width: 90px;
   }
@@ -522,6 +649,46 @@
     width: 8%;
     min-width: 50px;
   }
+}
+
+// Drag handle styles for variant table
+.variants-table .drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  color: #9ca3af;
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+
+  &:active {
+    cursor: grabbing;
+  }
+}
+
+// CDK drag-drop styles for table rows
+.variant-table .cdk-drag-preview {
+  display: table;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  border-radius: 4px;
+}
+
+.variant-table .cdk-drag-placeholder {
+  opacity: 0.4;
+  background: #f3f4f6;
+}
+
+.variant-table .cdk-drag-animating {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.variant-table.cdk-drop-list-dragging .mat-row:not(.cdk-drag-placeholder) {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
 }
 
 .variant-name .variant-badge {

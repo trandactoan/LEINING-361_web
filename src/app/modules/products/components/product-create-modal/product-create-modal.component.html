@@ -30,18 +30,18 @@
 
       <!-- Images Section -->
       <div class="image-upload-section">
-        <label class="upload-label">Hình ảnh sản phẩm</label>
+        <label class="upload-label">Hình ảnh sản phẩm ({{ imagePreviews.length }}/{{ maxImages }})</label>
         <div class="image-upload-area">
-          <input 
-            type="file" 
-            id="imageUpload" 
-            multiple 
-            (change)="onImagesSelected($event)" 
-            accept="image/*" 
+          <input
+            type="file"
+            id="imageUpload"
+            multiple
+            (change)="onImagesSelected($event)"
+            accept="image/*"
             #fileInput
             style="display: none;"
           />
-          
+
           <div class="image-list" #imageListRef *ngIf="imagePreviews.length > 0" cdkDropList cdkDropListOrientation="vertical" (cdkDropListDropped)="dropImage($event)">
             <div class="image-list-item" *ngFor="let preview of imagePreviews; let i = index" cdkDrag>
               <div class="drag-handle" cdkDragHandle>
@@ -59,14 +59,18 @@
               </button>
             </div>
           </div>
-          <div class="add-image-btn" *ngIf="imagePreviews.length > 0" (click)="fileInput.click()">
+          <div class="add-image-btn" *ngIf="imagePreviews.length > 0 && imagePreviews.length < maxImages" (click)="fileInput.click()">
             <mat-icon>add_photo_alternate</mat-icon>
-            <span>Thêm ảnh</span>
+            <span>Thêm ảnh (còn {{ maxImages - imagePreviews.length }})</span>
+          </div>
+          <div class="max-images-reached" *ngIf="imagePreviews.length >= maxImages">
+            <mat-icon>check_circle</mat-icon>
+            <span>Đã đạt tối đa {{ maxImages }} ảnh</span>
           </div>
 
           <div class="empty-upload" *ngIf="imagePreviews.length === 0" (click)="fileInput.click()">
             <mat-icon>cloud_upload</mat-icon>
-            <p>Thêm hình ảnh trong mô tả sản phẩm</p>
+            <p>Thêm hình ảnh trong mô tả sản phẩm (tối đa {{ maxImages }} ảnh)</p>
             <button mat-stroked-button color="primary">Chọn hình ảnh</button>
           </div>
         </div>
@@ -205,9 +209,12 @@
 
       <div *ngIf="hasVariants" class="variants-config">
         <!-- Variant Options Configuration -->
-        <div class="variant-options">
-          <div *ngFor="let option of variantOptions; let i = index" class="variant-option">
+        <div class="variant-options" cdkDropList (cdkDropListDropped)="dropVariantOption($event)">
+          <div *ngFor="let option of variantOptions; let i = index" class="variant-option" cdkDrag>
             <div class="option-header">
+              <div class="option-drag-handle" cdkDragHandle>
+                <mat-icon>drag_indicator</mat-icon>
+              </div>
               <mat-form-field appearance="outline" class="option-name">
                 <mat-label>Loại phân loại {{ i + 1 }}</mat-label>
                 <mat-select [(ngModel)]="option.name" (ngModelChange)="updateVariants()">
@@ -232,17 +239,14 @@
 
             <!-- Option Values -->
             <div class="option-values">
-              <mat-chip-listbox [(ngModel)]="option.selectedValues" multiple>
-                <mat-chip-option 
-                  *ngFor="let value of option.values; let j = index"
-                  [value]="value"
-                  [removable]="true"
-                  (removed)="removeOptionValue(i, j)"
-                >
-                  {{ value.name }}
-                  <mat-icon matChipRemove>cancel</mat-icon>
-                </mat-chip-option>
-              </mat-chip-listbox>
+              <div class="value-chips-container" cdkDropList cdkDropListOrientation="horizontal" (cdkDropListDropped)="dropOptionValue($event, i)">
+                <div class="value-chip" *ngFor="let value of option.values; let j = index" cdkDrag>
+                  <span class="chip-text">{{ value.name }}</span>
+                  <button mat-icon-button class="chip-remove" (click)="removeOptionValue(i, j)">
+                    <mat-icon>cancel</mat-icon>
+                  </button>
+                </div>
+              </div>
 
               <!-- Add Value Input -->
               <div class="add-value-input">
@@ -295,16 +299,11 @@
               <input matInput type="number" [(ngModel)]="variantTemplate.stock" />
             </mat-form-field>
             <mat-form-field appearance="outline" class="template-input">
-              <mat-label>Đã bán</mat-label>
-              <input matInput type="number" [(ngModel)]="variantTemplate.soldCount" />
-            </mat-form-field>
-            <mat-form-field appearance="outline" class="template-input">
               <mat-label>SKU</mat-label>
               <input matInput [(ngModel)]="variantTemplate.sku" placeholder="Mã SKU" />
             </mat-form-field>
             <button mat-raised-button color="primary" (click)="fillEmptyVariantValues()" class="fill-btn">
-              <mat-icon>auto_fix_high</mat-icon>
-              Điền giá trị trống
+              Hoàn thành các ô trống
             </button>
           </div>
         </div>
@@ -315,8 +314,18 @@
             <h4>Danh sách phân loại hàng</h4>
           </div>
 
-          <div class="variant-table">
+          <div class="variant-table" cdkDropList (cdkDropListDropped)="dropVariant($event)">
             <table mat-table [dataSource]="productVariants" class="variants-table">
+              <!-- Drag Handle Column -->
+              <ng-container matColumnDef="drag">
+                <th mat-header-cell *matHeaderCellDef></th>
+                <td mat-cell *matCellDef="let variant">
+                  <div class="drag-handle" cdkDragHandle>
+                    <mat-icon>drag_indicator</mat-icon>
+                  </div>
+                </td>
+              </ng-container>
+
               <!-- Variant Column -->
               <ng-container matColumnDef="variant">
                 <th mat-header-cell *matHeaderCellDef>Phân loại hàng</th>
@@ -358,16 +367,6 @@
                 <td mat-cell *matCellDef="let variant">
                   <mat-form-field appearance="outline" class="table-input">
                     <input matInput type="number" [(ngModel)]="variant.stock" />
-                  </mat-form-field>
-                </td>
-              </ng-container>
-
-              <!-- Sold Count Column -->
-              <ng-container matColumnDef="soldCount">
-                <th mat-header-cell *matHeaderCellDef>Đã bán</th>
-                <td mat-cell *matCellDef="let variant">
-                  <mat-form-field appearance="outline" class="table-input">
-                    <input matInput type="number" [(ngModel)]="variant.soldCount" />
                   </mat-form-field>
                 </td>
               </ng-container>
@@ -420,7 +419,7 @@
               </ng-container>
 
               <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-              <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedColumns;" cdkDrag></tr>
             </table>
           </div>
 

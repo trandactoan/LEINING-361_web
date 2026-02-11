@@ -58,6 +58,9 @@ export class ProductEditModalComponent implements OnInit, AfterViewInit {
 
   categories: CategoryDetail[] = [];
 
+  // Maximum number of images allowed
+  readonly maxImages = 8;
+
   // Image management - unified tracking
   imageItems: { preview: string; source: string | File; isOriginal: boolean }[] = [];
   deleteImage: string[] = [];
@@ -92,14 +95,13 @@ export class ProductEditModalComponent implements OnInit, AfterViewInit {
   variantTypes: string[] = ['Kích thước', 'Màu', 'Giới tính'];
 
   // Table columns
-  displayedColumns: string[] = ['variant', 'price', 'originalPrice', 'stock', 'soldCount', 'sku', 'variationImage', 'actions'];
+  displayedColumns: string[] = ['drag', 'variant', 'price', 'originalPrice', 'stock', 'sku', 'variationImage', 'actions'];
 
   // Template for auto-fill
   variantTemplate = {
     price: 0,
     originalPrice: 0,
     stock: 0,
-    soldCount: 0,
     sku: ''
   };
 
@@ -146,9 +148,19 @@ export class ProductEditModalComponent implements OnInit, AfterViewInit {
     if (this.hasVariants) {
       this.productVariants = Array.isArray(this.editedProduct.variants) ? structuredClone(this.editedProduct.variants || []) : [];
 
-      // initialize variantOptions from existing variants if any
-      if (this.productVariants.length > 0) {
-        // Use array to preserve insertion order of option names and values
+      // Use stored variantOptions if available (preserves chip order), otherwise derive from variants
+      if (this.editedProduct.variantOptions && Array.isArray(this.editedProduct.variantOptions) && this.editedProduct.variantOptions.length > 0) {
+        // Use stored variantOptions with preserved order
+        this.variantOptions = this.editedProduct.variantOptions.map((opt: any) => ({
+          name: opt.name,
+          values: (opt.values || []).map((v: string) => ({ name: v }))
+        }));
+        this.newOptionValues = this.variantOptions.map(() => '');
+
+        // Sort variants by the stored options order
+        this.sortVariantsByOptions(this.productVariants, this.variantOptions);
+      } else if (this.productVariants.length > 0) {
+        // Fallback: derive variantOptions from existing variants
         const optionNames: string[] = [];
         const optionValuesMap: Record<string, string[]> = {};
 
@@ -265,10 +277,16 @@ export class ProductEditModalComponent implements OnInit, AfterViewInit {
         price: v.price,
         originalPrice: v.originalPrice,
         stock: v.stock,
-        soldCount: v.soldCount || 0,
         sku: v.sku,
         variationImage: v.variationImage instanceof File ? v.variationImage : v.variationImage
       }));
+      // Store variantOptions with their ordered values to preserve chip order
+      base.variantOptions = this.variantOptions
+        .filter(opt => opt.name && opt.values && opt.values.length > 0)
+        .map(opt => ({
+          name: opt.name,
+          values: opt.values.map(v => v.name)
+        }));
     } else {
       // non-variant product keeps top-level inventory fields
       base.stock = this.editedProduct.stock;
@@ -293,10 +311,19 @@ export class ProductEditModalComponent implements OnInit, AfterViewInit {
     const input = event.target as HTMLInputElement;
     if (!input.files) return;
 
-    const filesCount = input.files.length;
+    // Calculate how many more images can be added
+    const remainingSlots = this.maxImages - this.imageItems.length;
+    if (remainingSlots <= 0) {
+      input.value = '';
+      return;
+    }
+
+    // Limit files to remaining slots
+    const filesToUpload = Array.from(input.files).slice(0, remainingSlots);
+    const filesCount = filesToUpload.length;
     let loadedCount = 0;
 
-    Array.from(input.files).forEach(file => {
+    filesToUpload.forEach(file => {
       const reader = new FileReader();
       reader.onload = (e: any) => {
         this.imageItems.push({
@@ -313,6 +340,8 @@ export class ProductEditModalComponent implements OnInit, AfterViewInit {
       };
       reader.readAsDataURL(file);
     });
+
+    input.value = '';
   }
 
   // Scroll image list to bottom to show newest images
@@ -395,6 +424,13 @@ export class ProductEditModalComponent implements OnInit, AfterViewInit {
     this.updateVariantsFromOptions();
   }
 
+  dropVariantOption(event: CdkDragDrop<any[]>): void {
+    moveItemInArray(this.variantOptions, event.previousIndex, event.currentIndex);
+    moveItemInArray(this.newOptionValues, event.previousIndex, event.currentIndex);
+    // Only re-sort existing variants, don't regenerate
+    this.sortExistingVariants();
+  }
+
   addOptionValue(optionIndex: number): void {
     const value = this.newOptionValues[optionIndex]?.trim();
     if (!value) return;
@@ -406,6 +442,12 @@ export class ProductEditModalComponent implements OnInit, AfterViewInit {
   removeOptionValue(optionIndex: number, valueIndex: number): void {
     this.variantOptions[optionIndex].values.splice(valueIndex, 1);
     this.updateVariantsFromOptions();
+  }
+
+  dropOptionValue(event: CdkDragDrop<any[]>, optionIndex: number): void {
+    moveItemInArray(this.variantOptions[optionIndex].values, event.previousIndex, event.currentIndex);
+    // Only re-sort existing variants, don't regenerate
+    this.sortExistingVariants();
   }
 
   updateVariantsFromOptions(): void {
@@ -487,6 +529,41 @@ export class ProductEditModalComponent implements OnInit, AfterViewInit {
     });
   }
 
+  // Sort existing variants by the order of values in variantOptions (without regenerating)
+  private sortExistingVariants(): void {
+    if (this.productVariants.length === 0) return;
+
+    const validOptions = this.variantOptions.filter(opt => opt.name && opt.values && opt.values.length > 0);
+    if (validOptions.length === 0) return;
+
+    // Save current image previews keyed by variant attribute key
+    const previewsByKey = new Map<string, string>();
+    this.productVariants.forEach((variant, idx) => {
+      const key = this.getVariantAttributeKey(variant.attributes);
+      const preview = this.variantImagePreviews.get(idx);
+      if (preview) {
+        previewsByKey.set(key, preview);
+      }
+    });
+
+    // Sort variants and reassign array to trigger Angular change detection
+    this.sortVariantsByOptions(this.productVariants, validOptions);
+    this.productVariants = [...this.productVariants];
+
+    // Rebuild image previews map with new indices
+    const newPreviews = new Map<number, string>();
+    this.productVariants.forEach((variant, idx) => {
+      const key = this.getVariantAttributeKey(variant.attributes);
+      const preview = previewsByKey.get(key);
+      if (preview) {
+        newPreviews.set(idx, preview);
+      } else if (variant.variationImage && typeof variant.variationImage === 'string') {
+        newPreviews.set(idx, variant.variationImage);
+      }
+    });
+    this.variantImagePreviews = newPreviews;
+  }
+
   // alias to match create modal API
   updateVariants(): void {
     this.updateVariantsFromOptions();
@@ -511,10 +588,6 @@ export class ProductEditModalComponent implements OnInit, AfterViewInit {
       // Fill stock if empty or 0
       if (!variant.stock && this.variantTemplate.stock) {
         variant.stock = this.variantTemplate.stock;
-      }
-      // Fill soldCount if empty or 0
-      if (!variant.soldCount && this.variantTemplate.soldCount) {
-        variant.soldCount = this.variantTemplate.soldCount;
       }
       // Fill sku if empty
       if (!variant.sku && this.variantTemplate.sku) {
@@ -557,7 +630,6 @@ export class ProductEditModalComponent implements OnInit, AfterViewInit {
             price: existingVariant.price,
             originalPrice: existingVariant.originalPrice,
             stock: existingVariant.stock,
-            soldCount: existingVariant.soldCount || 0,
             sku: existingVariant.sku,
             variationImage: existingVariant.variationImage
           });
@@ -568,7 +640,6 @@ export class ProductEditModalComponent implements OnInit, AfterViewInit {
             price: this.editedProduct.price || 0,
             originalPrice: this.editedProduct.originalPrice || 0,
             stock: 0,
-            soldCount: 0,
             sku: '',
             variationImage: undefined
           });
@@ -739,6 +810,10 @@ export class ProductEditModalComponent implements OnInit, AfterViewInit {
     if (typeof variationImage === 'string') return variationImage;
 
     return undefined;
+  }
+
+  dropVariant(event: CdkDragDrop<any[]>): void {
+    moveItemInArray(this.productVariants, event.previousIndex, event.currentIndex);
   }
 
   trackByIndex(index: number): number { return index; }

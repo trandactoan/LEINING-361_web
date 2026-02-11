@@ -118,6 +118,7 @@ export class ProductDetailComponent {
       width: '90vw',
       maxWidth: '90vw',
       maxHeight: '90vh',
+      disableClose: true,
       data: {product: this.product, categories: this.categories}
     });
 

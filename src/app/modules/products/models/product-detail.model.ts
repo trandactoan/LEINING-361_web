@@ -34,8 +34,7 @@ export interface ProductVariation {
     originalPrice?: number,
     stock: number,
     sku: string,
-    variationImage?: string,
-    soldCount?: number
+    variationImage?: string
 }
 
 export interface VariantAttribute {

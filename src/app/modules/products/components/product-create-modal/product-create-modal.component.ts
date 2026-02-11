@@ -78,6 +78,9 @@ export class ProductCreateModalComponent implements OnInit {
   imageFiles: File[] = [];
   imageUrl: string[] = [];
 
+  // Maximum number of images allowed
+  readonly maxImages = 8;
+
   // Size guide management
   sizeGuidePreview: string = '';
   sizeGuideUrl: string = '';
@@ -95,14 +98,13 @@ export class ProductCreateModalComponent implements OnInit {
   variantTypes: string[] = ['Kích thước', 'Màu', 'Giới tính'];
   
   // Table columns
-  displayedColumns: string[] = ['variant', 'price', 'originalPrice', 'stock', 'soldCount', 'sku', 'variationImage', 'actions'];
+  displayedColumns: string[] = ['drag', 'variant', 'price', 'originalPrice', 'stock', 'sku', 'variationImage', 'actions'];
 
   // Template for auto-fill
   variantTemplate = {
     price: 0,
     originalPrice: 0,
     stock: 0,
-    soldCount: 0,
     sku: ''
   };
 
@@ -143,10 +145,19 @@ export class ProductCreateModalComponent implements OnInit {
   async onImagesSelected(event: Event): Promise<any> {
     const input = event.target as HTMLInputElement;
     if (input.files) {
-      const filesCount = input.files.length;
+      // Calculate how many more images can be added
+      const remainingSlots = this.maxImages - this.imagePreviews.length;
+      if (remainingSlots <= 0) {
+        input.value = '';
+        return;
+      }
+
+      // Limit files to remaining slots
+      const filesToUpload = Array.from(input.files).slice(0, remainingSlots);
+      const filesCount = filesToUpload.length;
       let loadedCount = 0;
 
-      var uploadImagePromise = Array.from(input.files).map(async file => {
+      var uploadImagePromise = filesToUpload.map(async file => {
         this.imageFiles.push(file);
 
         const reader = new FileReader();
@@ -164,6 +175,7 @@ export class ProductCreateModalComponent implements OnInit {
         this.imageUrl.push(response?.url!);
       });
       await Promise.all(uploadImagePromise);
+      input.value = '';
     }
   }
 
@@ -341,6 +353,13 @@ export class ProductCreateModalComponent implements OnInit {
     this.updateVariants();
   }
 
+  dropVariantOption(event: CdkDragDrop<any[]>): void {
+    moveItemInArray(this.variantOptions, event.previousIndex, event.currentIndex);
+    moveItemInArray(this.newOptionValues, event.previousIndex, event.currentIndex);
+    // Only re-sort existing variants, don't regenerate
+    this.sortExistingVariants();
+  }
+
   addOptionValue(optionIndex: number): void {
     const value = this.newOptionValues[optionIndex]?.trim();
     if (!value) return;
@@ -358,6 +377,12 @@ export class ProductCreateModalComponent implements OnInit {
   removeOptionValue(optionIndex: number, valueIndex: number): void {
     this.variantOptions[optionIndex].values.splice(valueIndex, 1);
     this.updateVariants();
+  }
+
+  dropOptionValue(event: CdkDragDrop<any[]>, optionIndex: number): void {
+    moveItemInArray(this.variantOptions[optionIndex].values, event.previousIndex, event.currentIndex);
+    // Only re-sort existing variants, don't regenerate
+    this.sortExistingVariants();
   }
 
   onVariantsToggle(): void {
@@ -389,7 +414,7 @@ export class ProductCreateModalComponent implements OnInit {
     if (options.length === 0) return [];
 
     const combinations: ProductVariant[] = [];
-    
+
     const generate = (index: number, current: VariantAttribute[]) => {
       if (index === options.length) {
         combinations.push({
@@ -397,7 +422,6 @@ export class ProductCreateModalComponent implements OnInit {
           price: this.newProduct.price || 0,
           originalPrice: this.newProduct.originalPrice || 0,
           stock: 0,
-          soldCount: 0,
           sku: '',
           variationImage: undefined,
           variationImagePreview: undefined
@@ -416,6 +440,67 @@ export class ProductCreateModalComponent implements OnInit {
 
     generate(0, []);
     return combinations;
+  }
+
+  // Sort existing variants by the order of values in variantOptions (without regenerating)
+  private sortExistingVariants(): void {
+    if (this.productVariants.length === 0) return;
+
+    const validOptions = this.variantOptions.filter(opt => opt.name && opt.values.length > 0);
+    if (validOptions.length === 0) return;
+
+    // Create map: optionName -> (valueName -> index)
+    const orderMap = new Map<string, Map<string, number>>();
+    validOptions.forEach(opt => {
+      const valueMap = new Map<string, number>();
+      opt.values.forEach((val, valIdx) => valueMap.set(val.name, valIdx));
+      orderMap.set(opt.name, valueMap);
+    });
+
+    // Save current image previews keyed by variant attribute key
+    const previewsByKey = new Map<string, string>();
+    this.productVariants.forEach((variant, idx) => {
+      const key = this.getVariantAttributeKey(variant.attributes);
+      const preview = this.variantImagePreviews.get(idx);
+      if (preview) {
+        previewsByKey.set(key, preview);
+      }
+    });
+
+    // Sort variants and reassign array to trigger Angular change detection
+    this.productVariants = [...this.productVariants].sort((a, b) => {
+      for (let i = 0; i < validOptions.length; i++) {
+        const optName = validOptions[i].name;
+        const aAttr = a.attributes?.find((attr: any) => attr.name === optName);
+        const bAttr = b.attributes?.find((attr: any) => attr.name === optName);
+
+        const aIdx = aAttr ? (orderMap.get(optName)?.get(aAttr.value) ?? 999) : 999;
+        const bIdx = bAttr ? (orderMap.get(optName)?.get(bAttr.value) ?? 999) : 999;
+
+        if (aIdx !== bIdx) return aIdx - bIdx;
+      }
+      return 0;
+    });
+
+    // Rebuild image previews map with new indices
+    const newPreviews = new Map<number, string>();
+    this.productVariants.forEach((variant, idx) => {
+      const key = this.getVariantAttributeKey(variant.attributes);
+      const preview = previewsByKey.get(key);
+      if (preview) {
+        newPreviews.set(idx, preview);
+      }
+    });
+    this.variantImagePreviews = newPreviews;
+  }
+
+  // Helper to create a unique key from variant attributes
+  private getVariantAttributeKey(attributes: VariantAttribute[]): string {
+    if (!attributes || attributes.length === 0) return '';
+    return attributes
+      .map(attr => `${attr.name}:${attr.value}`)
+      .sort()
+      .join('|');
   }
 
   applyToAllVariants(): void {
@@ -439,10 +524,6 @@ export class ProductCreateModalComponent implements OnInit {
       // Fill stock if empty or 0
       if (!variant.stock && this.variantTemplate.stock) {
         variant.stock = this.variantTemplate.stock;
-      }
-      // Fill soldCount if empty or 0
-      if (!variant.soldCount && this.variantTemplate.soldCount) {
-        variant.soldCount = this.variantTemplate.soldCount;
       }
       // Fill sku if empty
       if (!variant.sku && this.variantTemplate.sku) {
@@ -548,10 +629,16 @@ export class ProductCreateModalComponent implements OnInit {
         price: variant.price,
         originalPrice: variant.originalPrice,
         stock: variant.stock,
-        soldCount: variant.soldCount || 0,
         sku: variant.sku,
         variationImage: variant.variationImage
       }));
+      // Store variantOptions with their ordered values to preserve chip order
+      product.variantOptions = this.variantOptions
+        .filter(opt => opt.name && opt.values.length > 0)
+        .map(opt => ({
+          name: opt.name,
+          values: opt.values.map(v => v.name)
+        }));
     } else {
       // For non-variant products, keep price and originalPrice
       product.price = this.newProduct.price;
@@ -562,6 +649,10 @@ export class ProductCreateModalComponent implements OnInit {
     }
 
     return product;
+  }
+
+  dropVariant(event: CdkDragDrop<any[]>): void {
+    moveItemInArray(this.productVariants, event.previousIndex, event.currentIndex);
   }
 
   trackByIndex(index: number): number {
