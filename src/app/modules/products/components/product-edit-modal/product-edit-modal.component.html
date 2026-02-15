@@ -202,6 +202,11 @@
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="form-field">
+            <mat-label>SKU</mat-label>
+            <input matInput [(ngModel)]="editedProduct.sku" placeholder="Mã sản phẩm" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="form-field">
             <mat-label>Số lượng bán</mat-label>
             <input matInput type="number" [(ngModel)]="editedProduct.soldCount" placeholder="0" />
           </mat-form-field>
@@ -281,7 +286,7 @@
           <span class="template-hint">Điền giá trị mẫu và nhấn nút để áp dụng cho các ô trống</span>
         </div>
         <div class="template-inputs">
-          <mat-form-field appearance="outline" class="template-input" *ngIf="getFirstOptionValues().length > 0">
+          <mat-form-field appearance="outline" class="template-input filter-input" *ngIf="getFirstOptionValues().length > 0">
             <mat-label>Áp dụng cho</mat-label>
             <mat-select [(ngModel)]="selectedFillFilters" multiple>
               <mat-option *ngFor="let value of getFirstOptionValues()" [value]="value">
@@ -451,11 +456,6 @@
           <mat-form-field appearance="outline" class="form-field">
             <mat-label>Kho hàng</mat-label>
             <input matInput type="number" [(ngModel)]="editedProduct.stock" placeholder="0" />
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="form-field">
-            <mat-label>SKU</mat-label>
-            <input matInput [(ngModel)]="editedProduct.sku" placeholder="Mã sản phẩm" />
           </mat-form-field>
         </div>
       </div>

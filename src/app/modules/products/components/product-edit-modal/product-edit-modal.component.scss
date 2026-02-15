@@ -597,6 +597,11 @@
   flex: 1;
   min-width: 100px;
   max-width: 150px;
+
+  &.filter-input {
+    min-width: 180px;
+    max-width: 250px;
+  }
 }
 
 .fill-btn {

@@ -162,12 +162,22 @@ export class ProductCreateModalComponent implements OnInit {
       const filesCount = filesToUpload.length;
       let loadedCount = 0;
 
-      var uploadImagePromise = filesToUpload.map(async file => {
-        this.imageFiles.push(file);
+      // Calculate starting index for this batch to maintain correct order
+      const startIndex = this.imagePreviews.length;
+
+      // Pre-allocate arrays to maintain synchronized indices
+      for (let i = 0; i < filesCount; i++) {
+        this.imageFiles.push(filesToUpload[i]);
+        this.imagePreviews.push(''); // placeholder for preview
+        this.imageUrl.push(''); // placeholder for URL
+      }
+
+      var uploadImagePromise = filesToUpload.map(async (file, i) => {
+        const index = startIndex + i;
 
         const reader = new FileReader();
         reader.onload = (e: any) => {
-          this.imagePreviews.push(e.target.result);
+          this.imagePreviews[index] = e.target.result;
           loadedCount++;
 
           // Scroll to bottom after all previews are loaded
@@ -177,7 +187,7 @@ export class ProductCreateModalComponent implements OnInit {
         };
         reader.readAsDataURL(file);
         const response = await this.imageService.uploadImage(file).toPromise();
-        this.imageUrl.push(response?.url!);
+        this.imageUrl[index] = response?.url!;
       });
       await Promise.all(uploadImagePromise);
       input.value = '';
@@ -722,6 +732,7 @@ export class ProductCreateModalComponent implements OnInit {
       hasVariants: this.hasVariants,
       sizeGuide: this.sizeGuideUrl || undefined,
       soldCount: this.newProduct.soldCount || 0,
+      sku: this.newProduct.sku,
     };
 
     if (this.hasVariants) {
@@ -742,9 +753,8 @@ export class ProductCreateModalComponent implements OnInit {
           values: opt.values.map(v => v.name)
         }));
     } else {
-      // For non-variant products, keep price and originalPrice
+      // For non-variant products, keep stock
       product.stock = this.newProduct.stock;
-      product.sku = this.newProduct.sku;
       delete product.variants;
     }
 
