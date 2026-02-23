@@ -1,0 +1,135 @@
+<div class="voucher-modal">
+    <div class="modal-header">
+        <h2 mat-dialog-title>Chỉnh sửa Voucher</h2>
+        <button mat-icon-button class="close-btn" (click)="cancel()">
+            <mat-icon>close</mat-icon>
+        </button>
+    </div>
+
+    <mat-dialog-content class="modal-content">
+        <!-- Basic Info -->
+        <section class="section">
+            <h3 class="section-title">Thông tin cơ bản</h3>
+
+            <div class="form-row">
+                <mat-form-field appearance="outline" class="form-field">
+                    <mat-label>Mã voucher</mat-label>
+                    <input matInput [value]="voucher.code" disabled />
+                    <mat-hint>Không thể thay đổi mã voucher</mat-hint>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="form-field flex-2">
+                    <mat-label>Tên voucher</mat-label>
+                    <input matInput [(ngModel)]="voucher.name" placeholder="VD: Giảm 10% cho đơn đầu tiên" />
+                </mat-form-field>
+            </div>
+
+            <mat-form-field appearance="outline" class="form-field full-width">
+                <mat-label>Mô tả (tùy chọn)</mat-label>
+                <textarea matInput [(ngModel)]="voucher.description" placeholder="Mô tả chi tiết về voucher..."
+                    rows="2"></textarea>
+            </mat-form-field>
+        </section>
+
+        <!-- Discount Info -->
+        <section class="section">
+            <h3 class="section-title">Thông tin giảm giá</h3>
+
+            <div class="discount-type">
+                <label class="field-label">Loại giảm giá</label>
+                <mat-radio-group [(ngModel)]="voucher.discountType" class="radio-group">
+                    <mat-radio-button value="percentage">Phần trăm (%)</mat-radio-button>
+                    <mat-radio-button value="fixed">Số tiền cố định (₫)</mat-radio-button>
+                </mat-radio-group>
+            </div>
+
+            <div class="form-row">
+                <mat-form-field appearance="outline" class="form-field">
+                    <mat-label>Giá trị giảm</mat-label>
+                    <input matInput type="number" [(ngModel)]="voucher.discountValue" />
+                    <span matTextSuffix>{{ voucher.discountType === 'percentage' ? '%' : '₫' }}&nbsp;</span>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="form-field" *ngIf="voucher.discountType === 'percentage'">
+                    <mat-label>Giảm tối đa</mat-label>
+                    <input matInput type="number" [(ngModel)]="voucher.maxDiscountAmount" placeholder="Không giới hạn" />
+                    <span matTextSuffix>₫&nbsp;</span>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="form-field">
+                    <mat-label>Đơn tối thiểu</mat-label>
+                    <input matInput type="number" [(ngModel)]="voucher.minOrderAmount" placeholder="0" />
+                    <span matTextSuffix>₫&nbsp;</span>
+                </mat-form-field>
+            </div>
+        </section>
+
+        <!-- Usage Info -->
+        <section class="section">
+            <h3 class="section-title">Thông tin sử dụng</h3>
+
+            <div class="form-row">
+                <mat-form-field appearance="outline" class="form-field">
+                    <mat-label>Số lượt sử dụng tối đa</mat-label>
+                    <input matInput type="number" [(ngModel)]="voucher.usageLimit" placeholder="Không giới hạn" />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="form-field">
+                    <mat-label>Đã sử dụng</mat-label>
+                    <input matInput type="number" [value]="voucher.usedCount" disabled />
+                </mat-form-field>
+            </div>
+        </section>
+
+        <!-- Validity Period -->
+        <section class="section">
+            <h3 class="section-title">Thời gian hiệu lực</h3>
+
+            <div class="form-row">
+                <mat-form-field appearance="outline" class="form-field">
+                    <mat-label>Ngày bắt đầu</mat-label>
+                    <input matInput [matDatepicker]="startPicker" [(ngModel)]="voucher.startDate" />
+                    <mat-datepicker-toggle matIconSuffix [for]="startPicker"></mat-datepicker-toggle>
+                    <mat-datepicker #startPicker></mat-datepicker>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="form-field">
+                    <mat-label>Ngày kết thúc</mat-label>
+                    <input matInput [matDatepicker]="endPicker" [(ngModel)]="voucher.endDate" />
+                    <mat-datepicker-toggle matIconSuffix [for]="endPicker"></mat-datepicker-toggle>
+                    <mat-datepicker #endPicker></mat-datepicker>
+                </mat-form-field>
+            </div>
+        </section>
+
+        <!-- Category Restrictions -->
+        <section class="section">
+            <h3 class="section-title">Áp dụng cho danh mục</h3>
+
+            <mat-form-field appearance="outline" class="form-field full-width">
+                <mat-label>Chọn danh mục</mat-label>
+                <mat-select [(ngModel)]="voucher.applicableCategories" multiple>
+                    <mat-option *ngFor="let category of categories" [value]="category.id">
+                        {{ category.name }}
+                    </mat-option>
+                </mat-select>
+                <mat-hint>Để trống để áp dụng cho tất cả sản phẩm</mat-hint>
+            </mat-form-field>
+        </section>
+
+        <!-- Active Status -->
+        <section class="section">
+            <mat-slide-toggle [(ngModel)]="voucher.isActive">
+                Kích hoạt voucher
+            </mat-slide-toggle>
+        </section>
+    </mat-dialog-content>
+
+    <mat-dialog-actions class="modal-actions">
+        <button mat-button (click)="cancel()">Hủy</button>
+        <button mat-raised-button color="primary" (click)="save()" [disabled]="!isValid()">
+            <mat-icon>check</mat-icon>
+            Lưu thay đổi
+        </button>
+    </mat-dialog-actions>
+</div>
