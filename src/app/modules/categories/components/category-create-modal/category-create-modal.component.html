@@ -1,0 +1,57 @@
+<div class="category-modal">
+    <div class="modal-header">
+        <h2 mat-dialog-title>Tạo Danh mục Mới</h2>
+        <button mat-icon-button class="close-btn" (click)="cancel()">
+            <mat-icon>close</mat-icon>
+        </button>
+    </div>
+
+    <mat-dialog-content class="modal-content">
+        <section class="section">
+            <mat-form-field appearance="outline" class="form-field full-width">
+                <mat-label>Tên danh mục</mat-label>
+                <input matInput [(ngModel)]="category.name" placeholder="VD: Điện thoại, Laptop, ..." />
+            </mat-form-field>
+
+            <!-- Image Upload Section -->
+            <div class="image-upload-section">
+                <label class="field-label">Hình ảnh danh mục</label>
+
+                <div class="image-upload-area" *ngIf="!imagePreview && !isUploading">
+                    <input
+                        type="file"
+                        accept="image/*"
+                        (change)="onImageSelected($event)"
+                        #imageInput
+                        hidden
+                    />
+                    <button mat-stroked-button type="button" (click)="imageInput.click()">
+                        <mat-icon>cloud_upload</mat-icon>
+                        Chọn hình ảnh
+                    </button>
+                    <p class="upload-hint">Chỉ cho phép 1 hình ảnh, tối đa 5MB</p>
+                </div>
+
+                <div class="image-uploading" *ngIf="isUploading">
+                    <mat-spinner diameter="40"></mat-spinner>
+                    <p>Đang tải lên...</p>
+                </div>
+
+                <div class="image-preview-container" *ngIf="imagePreview && !isUploading">
+                    <img [src]="imagePreview" alt="Preview" class="preview-image" />
+                    <button mat-icon-button class="remove-image-btn" (click)="removeImage()" color="warn">
+                        <mat-icon>close</mat-icon>
+                    </button>
+                </div>
+            </div>
+        </section>
+    </mat-dialog-content>
+
+    <mat-dialog-actions class="modal-actions">
+        <button mat-button (click)="cancel()">Hủy</button>
+        <button mat-raised-button color="primary" (click)="create()" [disabled]="!isValid()">
+            <mat-icon>check</mat-icon>
+            Tạo Danh mục
+        </button>
+    </mat-dialog-actions>
+</div>
