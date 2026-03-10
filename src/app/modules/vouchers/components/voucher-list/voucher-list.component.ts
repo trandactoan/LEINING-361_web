@@ -93,6 +93,9 @@ export class VoucherListComponent {
         if (voucher.discountType === 'percentage') {
             return `${voucher.discountValue}%`;
         }
+        if (voucher.discountType === 'free_shipping') {
+            return 'Miễn phí ship';
+        }
         return `${voucher.discountValue.toLocaleString('vi-VN')}₫`;
     }
 

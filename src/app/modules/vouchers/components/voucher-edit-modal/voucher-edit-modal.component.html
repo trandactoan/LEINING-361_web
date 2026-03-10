@@ -40,10 +40,11 @@
                 <mat-radio-group [(ngModel)]="voucher.discountType" class="radio-group">
                     <mat-radio-button value="percentage">Phần trăm (%)</mat-radio-button>
                     <mat-radio-button value="fixed">Số tiền cố định (₫)</mat-radio-button>
+                    <mat-radio-button value="free_shipping">Miễn phí vận chuyển</mat-radio-button>
                 </mat-radio-group>
             </div>
 
-            <div class="form-row">
+            <div class="form-row" *ngIf="voucher.discountType !== 'free_shipping'">
                 <mat-form-field appearance="outline" class="form-field">
                     <mat-label>Giá trị giảm</mat-label>
                     <input matInput type="number" [(ngModel)]="voucher.discountValue" />
@@ -56,6 +57,14 @@
                     <span matTextSuffix>₫&nbsp;</span>
                 </mat-form-field>
 
+                <mat-form-field appearance="outline" class="form-field">
+                    <mat-label>Đơn tối thiểu</mat-label>
+                    <input matInput type="number" [(ngModel)]="voucher.minOrderAmount" placeholder="0" />
+                    <span matTextSuffix>₫&nbsp;</span>
+                </mat-form-field>
+            </div>
+
+            <div class="form-row" *ngIf="voucher.discountType === 'free_shipping'">
                 <mat-form-field appearance="outline" class="form-field">
                     <mat-label>Đơn tối thiểu</mat-label>
                     <input matInput type="number" [(ngModel)]="voucher.minOrderAmount" placeholder="0" />

@@ -3,7 +3,7 @@ export interface Voucher {
     code: string;
     name: string;
     description?: string;
-    discountType: 'percentage' | 'fixed';
+    discountType: 'percentage' | 'fixed' | 'free_shipping';
     discountValue: number;
     minOrderAmount: number;
     maxDiscountAmount?: number;
@@ -21,8 +21,8 @@ export interface CreateVoucherDto {
     code: string;
     name: string;
     description?: string;
-    discountType: 'percentage' | 'fixed';
-    discountValue: number;
+    discountType: 'percentage' | 'fixed' | 'free_shipping';
+    discountValue?: number;
     minOrderAmount?: number;
     maxDiscountAmount?: number;
     usageLimit?: number;
@@ -35,7 +35,7 @@ export interface CreateVoucherDto {
 export interface UpdateVoucherDto {
     name?: string;
     description?: string;
-    discountType?: 'percentage' | 'fixed';
+    discountType?: 'percentage' | 'fixed' | 'free_shipping';
     discountValue?: number;
     minOrderAmount?: number;
     maxDiscountAmount?: number;

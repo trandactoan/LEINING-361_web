@@ -84,10 +84,11 @@ export class VoucherCreateModalComponent implements OnInit {
     }
 
     isValid(): boolean {
+        const hasDiscount = this.voucher.discountType === 'free_shipping' || (this.voucher.discountValue ?? 0) > 0;
         return !!(
             this.voucher.code &&
             this.voucher.name &&
-            this.voucher.discountValue > 0 &&
+            hasDiscount &&
             this.voucher.startDate &&
             this.voucher.endDate
         );
