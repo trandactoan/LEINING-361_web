@@ -3,6 +3,7 @@ import { ProductRoutes } from './modules/products/product.routes';
 import { ZnsRoutes } from './modules/zns/zns.routes';
 import { VoucherRoutes } from './modules/vouchers/voucher.routes';
 import { CategoryRoutes } from './modules/categories/category.routes';
+import { BannerRoutes } from './modules/banners/banner.routes';
 
 export const appRoutes: Routes = [
     {
@@ -20,5 +21,9 @@ export const appRoutes: Routes = [
     {
         path: 'vouchers',
         children: VoucherRoutes
+    },
+    {
+        path: 'banners',
+        children: BannerRoutes
     }
 ];

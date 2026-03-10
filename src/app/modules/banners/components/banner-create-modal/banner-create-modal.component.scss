@@ -1,0 +1,41 @@
+.banner-modal {
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px 0;
+
+    h2 { margin: 0; }
+}
+
+.modal-content {
+    padding: 16px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.full-width { width: 100%; }
+
+.preview-container {
+    text-align: center;
+    margin: -4px 0 4px;
+}
+
+.image-preview {
+    max-width: 100%;
+    max-height: 150px;
+    object-fit: contain;
+    border-radius: 6px;
+    border: 1px solid #e0e0e0;
+}
+
+.modal-actions {
+    padding: 8px 24px 16px;
+    justify-content: flex-end;
+    gap: 8px;
+}

@@ -1,0 +1,65 @@
+<div class="banner-list-container">
+    <div class="header">
+        <h2>Quản lý Banner</h2>
+        <button mat-flat-button color="primary" (click)="onCreate()">
+            <mat-icon>add</mat-icon>
+            Thêm Banner
+        </button>
+    </div>
+
+    <div class="mat-elevation-z8 banner-table-wrapper">
+        <table mat-table [dataSource]="dataSource" class="full-width-table">
+
+            <!-- Preview Column -->
+            <ng-container matColumnDef="preview">
+                <th mat-header-cell *matHeaderCellDef>Ảnh</th>
+                <td mat-cell *matCellDef="let element">
+                    <img [src]="element.imageUrl" class="banner-preview" alt="banner" />
+                </td>
+            </ng-container>
+
+            <!-- Order Column -->
+            <ng-container matColumnDef="order">
+                <th mat-header-cell *matHeaderCellDef>Thứ tự</th>
+                <td mat-cell *matCellDef="let element">{{ element.order }}</td>
+            </ng-container>
+
+            <!-- Link Column -->
+            <ng-container matColumnDef="link">
+                <th mat-header-cell *matHeaderCellDef>Liên kết</th>
+                <td mat-cell *matCellDef="let element">
+                    <span *ngIf="element.link" class="link-text">{{ element.link }}</span>
+                    <span *ngIf="!element.link" class="no-link">—</span>
+                </td>
+            </ng-container>
+
+            <!-- Status Column -->
+            <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef>Trạng thái</th>
+                <td mat-cell *matCellDef="let element">
+                    <mat-chip [class]="element.isActive ? 'active' : 'inactive'">
+                        {{ element.isActive ? 'Hiển thị' : 'Ẩn' }}
+                    </mat-chip>
+                </td>
+            </ng-container>
+
+            <!-- Action Column -->
+            <ng-container matColumnDef="action">
+                <th mat-header-cell *matHeaderCellDef>Thao tác</th>
+                <td mat-cell *matCellDef="let element">
+                    <button mat-icon-button color="primary" (click)="onEdit(element)">
+                        <mat-icon>edit</mat-icon>
+                    </button>
+                    <button mat-icon-button color="warn" (click)="onDelete(element)">
+                        <mat-icon>delete</mat-icon>
+                    </button>
+                </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="hover-row"></tr>
+        </table>
+
+        <mat-paginator [pageSizeOptions]="[10, 20]" [pageSize]="10" showFirstLastButtons></mat-paginator>
+    </div>
+</div>
