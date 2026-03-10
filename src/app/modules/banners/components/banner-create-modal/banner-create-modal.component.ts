@@ -63,7 +63,7 @@ export class BannerCreateModalComponent {
         this.isUploading = true;
         try {
             const response = await this.imageService.uploadImage(file).toPromise();
-            this.banner.imageUrl = response?.url ?? '';
+            this.banner.imageUrl = response?.path ?? '';
         } catch (err) {
             console.error('Image upload failed:', err);
             this.imagePreview = '';

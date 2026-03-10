@@ -68,7 +68,7 @@ export class BannerEditModalComponent {
         this.isUploading = true;
         try {
             const response = await this.imageService.uploadImage(file).toPromise();
-            this.banner.imageUrl = response?.url ?? '';
+            this.banner.imageUrl = response?.path ?? '';
             // Remove old image after successful upload
             if (oldUrl) {
                 this.imageService.removeImage(oldUrl).subscribe();
