@@ -7,14 +7,28 @@
     </div>
 
     <mat-dialog-content class="modal-content">
-        <mat-form-field appearance="outline" class="full-width">
-            <mat-label>URL ảnh</mat-label>
-            <input matInput [(ngModel)]="banner.imageUrl" placeholder="https://example.com/image.jpg" />
-            <mat-hint>Đường dẫn ảnh banner</mat-hint>
-        </mat-form-field>
 
-        <div class="preview-container" *ngIf="banner.imageUrl">
-            <img [src]="banner.imageUrl" class="image-preview" alt="preview" />
+        <!-- Image Upload -->
+        <div class="image-upload-section">
+            <div *ngIf="!imagePreview" class="upload-placeholder" (click)="imageInput.click()">
+                <mat-icon>add_photo_alternate</mat-icon>
+                <span>Chọn ảnh banner</span>
+            </div>
+
+            <div *ngIf="imagePreview" class="image-preview-wrapper">
+                <img [src]="imagePreview" class="image-preview" alt="banner preview" />
+                <div class="image-overlay">
+                    <button mat-icon-button (click)="imageInput.click()" matTooltip="Thay ảnh">
+                        <mat-icon>edit</mat-icon>
+                    </button>
+                    <button mat-icon-button color="warn" (click)="removeImage()" matTooltip="Xóa ảnh">
+                        <mat-icon>delete</mat-icon>
+                    </button>
+                </div>
+            </div>
+
+            <mat-progress-bar *ngIf="isUploading" mode="indeterminate"></mat-progress-bar>
+            <input #imageInput type="file" accept="image/*" hidden (change)="onImageSelected($event)" />
         </div>
 
         <mat-form-field appearance="outline" class="full-width">
@@ -31,6 +45,7 @@
         <mat-slide-toggle [(ngModel)]="banner.isActive">
             Hiển thị ngay
         </mat-slide-toggle>
+
     </mat-dialog-content>
 
     <mat-dialog-actions class="modal-actions">
