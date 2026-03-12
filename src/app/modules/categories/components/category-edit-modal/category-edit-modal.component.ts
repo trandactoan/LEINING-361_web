@@ -46,7 +46,8 @@ export class CategoryEditModalComponent {
         this.originalCategory = data.category;
         this.category = {
             name: data.category.name,
-            image: data.category.image || ''
+            image: data.category.image || '',
+            priority: data.category.priority ?? 0
         };
         this.imagePreview = data.category.image || '';
         this.originalImage = data.category.image || '';

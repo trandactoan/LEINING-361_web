@@ -29,6 +29,14 @@
                 </td>
             </ng-container>
 
+            <!-- Priority Column -->
+            <ng-container matColumnDef="priority">
+                <th mat-header-cell *matHeaderCellDef>Độ ưu tiên</th>
+                <td mat-cell *matCellDef="let element">
+                    <span class="priority-badge">{{ element.priority ?? 0 }}</span>
+                </td>
+            </ng-container>
+
             <!-- Action Column -->
             <ng-container matColumnDef="action">
                 <th mat-header-cell *matHeaderCellDef>Thao tác</th>

@@ -13,6 +13,12 @@
                 <input matInput [(ngModel)]="category.name" placeholder="VD: Điện thoại, Laptop, ..." />
             </mat-form-field>
 
+            <mat-form-field appearance="outline" class="form-field full-width">
+                <mat-label>Độ ưu tiên</mat-label>
+                <input matInput type="number" [(ngModel)]="category.priority" placeholder="0" min="0" />
+                <mat-hint>Số càng cao càng hiển thị trước (mặc định: 0)</mat-hint>
+            </mat-form-field>
+
             <!-- Image Upload Section -->
             <div class="image-upload-section">
                 <label class="field-label">Hình ảnh danh mục</label>

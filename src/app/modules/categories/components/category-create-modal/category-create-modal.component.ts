@@ -30,7 +30,8 @@ import { ImageService } from '../../../../shared/services/image.service';
 export class CategoryCreateModalComponent {
     category: CreateCategoryDto = {
         name: '',
-        image: ''
+        image: '',
+        priority: 0
     };
 
     imagePreview: string = '';

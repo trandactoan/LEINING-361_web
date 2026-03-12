@@ -30,7 +30,7 @@ export class CategoryListComponent {
     constructor(private categoryService: CategoryService) {}
 
     categories: Category[] = [];
-    displayedColumns = ['image', 'name', 'action'];
+    displayedColumns = ['image', 'name', 'priority', 'action'];
     dataSource = new MatTableDataSource<Category>(this.categories);
     readonly dialog = inject(MatDialog);
 
