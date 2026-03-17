@@ -736,7 +736,7 @@ export class ProductCreateModalComponent implements OnInit {
       reader.onload = (e: any) => { this.productComments[commentIndex].avatarPreview = e.target.result; };
       reader.readAsDataURL(file);
       const response = await this.imageService.uploadImage(file).toPromise();
-      this.productComments[commentIndex].avatar = response?.url || response?.path || '';
+      this.productComments[commentIndex].avatar = response?.path || '';
       input.value = '';
     }
   }
@@ -751,7 +751,7 @@ export class ProductCreateModalComponent implements OnInit {
       reader.onload = (e: any) => { comment.photosPreviews.push(e.target.result); };
       reader.readAsDataURL(file);
       const response = await this.imageService.uploadImage(file).toPromise();
-      comment.photos.push(response?.url || response?.path || '');
+      comment.photos.push(response?.path || '');
       input.value = '';
     }
   }
@@ -817,13 +817,15 @@ export class ProductCreateModalComponent implements OnInit {
       delete product.variants;
     }
 
-    product.comments = this.productComments.map(c => ({
-      userName: c.userName,
-      avatar: c.avatar || undefined,
-      rating: c.rating,
-      content: c.content,
-      photos: c.photos,
-    }));
+    product.comments = this.productComments
+      .filter(c => c.userName?.trim() && c.content?.trim())
+      .map(c => ({
+        userName: c.userName.trim(),
+        avatar: c.avatar || undefined,
+        rating: c.rating,
+        content: c.content.trim(),
+        photos: c.photos,
+      }));
 
     return product;
   }

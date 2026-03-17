@@ -325,13 +325,15 @@ export class ProductEditModalComponent implements OnInit, AfterViewInit {
       base.variants = undefined;
     }
 
-    base.comments = this.productComments.map(c => ({
-      userName: c.userName,
-      avatar: c.avatar || undefined,
-      rating: c.rating,
-      content: c.content,
-      photos: c.photos,
-    }));
+    base.comments = this.productComments
+      .filter(c => c.userName?.trim() && c.content?.trim())
+      .map(c => ({
+        userName: c.userName.trim(),
+        avatar: c.avatar || undefined,
+        rating: c.rating,
+        content: c.content.trim(),
+        photos: c.photos,
+      }));
 
     return base;
   }
@@ -974,7 +976,7 @@ export class ProductEditModalComponent implements OnInit, AfterViewInit {
       reader.onload = (e: any) => { this.productComments[commentIndex].avatarPreview = e.target.result; };
       reader.readAsDataURL(file);
       const response = await this.imageService.uploadImage(file).toPromise();
-      this.productComments[commentIndex].avatar = response?.url || response?.path || '';
+      this.productComments[commentIndex].avatar = response?.path || '';
       input.value = '';
     }
   }
@@ -989,7 +991,7 @@ export class ProductEditModalComponent implements OnInit, AfterViewInit {
       reader.onload = (e: any) => { comment.photosPreviews.push(e.target.result); };
       reader.readAsDataURL(file);
       const response = await this.imageService.uploadImage(file).toPromise();
-      comment.photos.push(response?.url || response?.path || '');
+      comment.photos.push(response?.path || '');
       input.value = '';
     }
   }
