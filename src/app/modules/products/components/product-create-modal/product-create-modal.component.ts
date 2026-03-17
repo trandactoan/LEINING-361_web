@@ -821,10 +821,10 @@ export class ProductCreateModalComponent implements OnInit {
       .filter(c => c.userName?.trim() && c.content?.trim())
       .map(c => ({
         userName: c.userName.trim(),
-        avatar: c.avatar || undefined,
+        avatar: c.avatar?.startsWith('http') ? c.avatar : undefined,
         rating: c.rating,
         content: c.content.trim(),
-        photos: c.photos,
+        photos: c.photos.filter(p => p && p.startsWith('http')),
       }));
 
     return product;
