@@ -142,6 +142,17 @@ export class ProductService{
             }
         }
 
+        // Delete removed images from server
+        for (const imgUrl of deleteImages) {
+            if (typeof imgUrl === 'string' && imgUrl) {
+                try {
+                    await this.imageService.removeImage(imgUrl).toPromise();
+                } catch (_err) {
+                    // Best-effort: continue even if deletion fails
+                }
+            }
+        }
+
         // Clean up helper fields
         delete productCopy.newImages;
         delete productCopy.deleteImages;

@@ -78,6 +78,17 @@ export class ProductCreateModalComponent implements OnInit {
   imageFiles: File[] = [];
   imageUrl: string[] = [];
 
+  // Comments management (max 3)
+  productComments: {
+    userName: string;
+    avatar: string;
+    avatarPreview: string;
+    rating: number;
+    content: string;
+    photos: string[];
+    photosPreviews: string[];
+  }[] = [];
+
   // Maximum number of images allowed
   readonly maxImages = 8;
 
@@ -702,6 +713,54 @@ export class ProductCreateModalComponent implements OnInit {
     return this.newProduct.originalPrice || 0;
   }
 
+  // Comments management
+  addComment(): void {
+    if (this.productComments.length < 3) {
+      this.productComments.push({ userName: '', avatar: '', avatarPreview: '', rating: 5, content: '', photos: [], photosPreviews: [] });
+    }
+  }
+
+  removeComment(index: number): void {
+    this.productComments.splice(index, 1);
+  }
+
+  setCommentRating(commentIndex: number, rating: number): void {
+    this.productComments[commentIndex].rating = rating;
+  }
+
+  async onCommentAvatarSelected(event: Event, commentIndex: number): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+      const reader = new FileReader();
+      reader.onload = (e: any) => { this.productComments[commentIndex].avatarPreview = e.target.result; };
+      reader.readAsDataURL(file);
+      const response = await this.imageService.uploadImage(file).toPromise();
+      this.productComments[commentIndex].avatar = response?.url || response?.path || '';
+      input.value = '';
+    }
+  }
+
+  async onCommentPhotoSelected(event: Event, commentIndex: number): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      const comment = this.productComments[commentIndex];
+      if (comment.photos.length >= 3) { input.value = ''; return; }
+      const file = input.files[0];
+      const reader = new FileReader();
+      reader.onload = (e: any) => { comment.photosPreviews.push(e.target.result); };
+      reader.readAsDataURL(file);
+      const response = await this.imageService.uploadImage(file).toPromise();
+      comment.photos.push(response?.url || response?.path || '');
+      input.value = '';
+    }
+  }
+
+  removeCommentPhoto(commentIndex: number, photoIndex: number): void {
+    this.productComments[commentIndex].photos.splice(photoIndex, 1);
+    this.productComments[commentIndex].photosPreviews.splice(photoIndex, 1);
+  }
+
   // Modal actions
   cancel(): void {
     this.dialogRef.close();
@@ -757,6 +816,14 @@ export class ProductCreateModalComponent implements OnInit {
       product.stock = this.newProduct.stock;
       delete product.variants;
     }
+
+    product.comments = this.productComments.map(c => ({
+      userName: c.userName,
+      avatar: c.avatar || undefined,
+      rating: c.rating,
+      content: c.content,
+      photos: c.photos,
+    }));
 
     return product;
   }

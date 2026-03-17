@@ -1,3 +1,14 @@
+export interface ProductComment {
+    userName: string;
+    avatar?: string;
+    rating: number;
+    content: string;
+    photos: string[];
+    // For admin UI tracking
+    avatarPreview?: string;
+    photosPreviews?: string[];
+}
+
 export interface ProductDetail{
     id?: string,
     name: string,
@@ -14,7 +25,8 @@ export interface ProductDetail{
     sizeGuide?: string,
     sku?: string,
     stock?: number,
-    soldCount?: number
+    soldCount?: number,
+    comments?: ProductComment[]
 }
 
 export interface DetailContent{

@@ -485,6 +485,88 @@
         </div>
       </div>
     </section>
+
+    <!-- Comments Section -->
+    <section class="section">
+      <div class="section-header">
+        <h3 class="section-title">Đánh giá sản phẩm (tối đa 3)</h3>
+        <button mat-stroked-button (click)="addComment()" [disabled]="productComments.length >= 3">
+          <mat-icon>add</mat-icon>
+          Thêm đánh giá
+        </button>
+      </div>
+
+      <div class="comments-list">
+        <div class="comment-card" *ngFor="let comment of productComments; let i = index">
+          <div class="comment-card-header">
+            <span class="comment-index">Đánh giá #{{ i + 1 }}</span>
+            <button mat-icon-button color="warn" (click)="removeComment(i)">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+
+          <div class="form-row">
+            <!-- Avatar -->
+            <div class="comment-avatar-section">
+              <div class="avatar-preview" *ngIf="comment.avatarPreview || comment.avatar">
+                <img [src]="comment.avatarPreview || comment.avatar" alt="Avatar" />
+                <button mat-icon-button class="remove-avatar-btn" (click)="comment.avatar=''; comment.avatarPreview=''">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </div>
+              <div class="avatar-placeholder" *ngIf="!comment.avatarPreview && !comment.avatar">
+                <input type="file" accept="image/*" (change)="onCommentAvatarSelected($event, i)" #avatarInput hidden />
+                <button mat-icon-button (click)="avatarInput.click()">
+                  <mat-icon>account_circle</mat-icon>
+                </button>
+                <span class="upload-hint">Avatar</span>
+              </div>
+            </div>
+
+            <!-- Name + Rating -->
+            <div class="comment-meta">
+              <mat-form-field appearance="outline" class="form-field full-width">
+                <mat-label>Tên người dùng</mat-label>
+                <input matInput [(ngModel)]="comment.userName" placeholder="Nguyễn Văn A" />
+              </mat-form-field>
+              <div class="star-rating">
+                <span class="rating-label">Đánh giá:</span>
+                <button *ngFor="let star of [1,2,3,4,5]" mat-icon-button (click)="setCommentRating(i, star)"
+                  [style.color]="star <= comment.rating ? '#f59e0b' : '#d1d5db'">
+                  <mat-icon>star</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Content -->
+          <mat-form-field appearance="outline" class="form-field full-width">
+            <mat-label>Nội dung đánh giá</mat-label>
+            <textarea matInput [(ngModel)]="comment.content" rows="3" placeholder="Nhập nội dung..."></textarea>
+          </mat-form-field>
+
+          <!-- Photos (max 3) -->
+          <div class="comment-photos">
+            <div class="photo-item" *ngFor="let photo of comment.photosPreviews; let j = index">
+              <img [src]="photo" alt="Photo" />
+              <button mat-icon-button class="remove-photo-btn" (click)="removeCommentPhoto(i, j)">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+            <div class="photo-add" *ngIf="comment.photos.length < 3">
+              <input type="file" accept="image/*" (change)="onCommentPhotoSelected($event, i)" #photoInput hidden />
+              <button mat-icon-button (click)="photoInput.click()">
+                <mat-icon>add_photo_alternate</mat-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="empty-comments" *ngIf="productComments.length === 0">
+          <p class="hint-text">Chưa có đánh giá nào. Nhấn "Thêm đánh giá" để thêm.</p>
+        </div>
+      </div>
+    </section>
   </mat-dialog-content>
 
   <!-- Footer Actions -->
