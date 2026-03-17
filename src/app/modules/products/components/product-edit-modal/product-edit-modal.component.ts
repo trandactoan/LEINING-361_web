@@ -223,8 +223,8 @@ export class ProductEditModalComponent implements OnInit, AfterViewInit {
       avatarPreview: c.avatar || '',
       rating: c.rating || 5,
       content: c.content || '',
-      photos: c.photos || [],
-      photosPreviews: c.photos || [],
+      photos: [...(c.photos || [])],
+      photosPreviews: [...(c.photos || [])],
     }));
   }
 
