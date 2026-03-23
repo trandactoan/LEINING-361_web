@@ -136,7 +136,8 @@ export class ProductEditModalComponent implements OnInit, AfterViewInit {
     @Inject(MAT_DIALOG_DATA) public data: any,
   ) {
     if (data?.product) {
-      this.editedProduct = structuredClone(data.product);
+      // Use JSON round-trip to get a clean plain object (strips any non-serializable Mongoose internals)
+      this.editedProduct = JSON.parse(JSON.stringify(data.product));
     }
     if (data?.categories) {
       this.categories = data.categories;
