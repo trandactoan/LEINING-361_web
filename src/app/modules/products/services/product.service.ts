@@ -94,14 +94,14 @@ export class ProductService{
             productCopy.images = uploadedImages;
         }
 
-        // Upload variation images
+        // Upload variation images in parallel
         if (productCopy.variants && Array.isArray(productCopy.variants)) {
-            for (const variant of productCopy.variants) {
+            await Promise.all(productCopy.variants.map(async (variant: any) => {
                 if (variant.variationImage instanceof File) {
                     const response = await this.imageService.uploadImage(variant.variationImage).toPromise();
                     variant.variationImage = response?.path || response?.url;
                 }
-            }
+            }));
         }
 
         return productCopy;
@@ -113,45 +113,42 @@ export class ProductService{
 
         const deleteImages: string[] = Array.isArray(editedProduct.deleteImages) ? editedProduct.deleteImages : [];
 
-        // Process images in order, preserving the user's arrangement
-        const finalImages: string[] = [];
+        // Upload new images in parallel while preserving order
         if (editedProduct.images && Array.isArray(editedProduct.images)) {
-            for (const img of editedProduct.images) {
+            const results = await Promise.all(editedProduct.images.map(async (img: any) => {
                 if (img instanceof File) {
-                    // Upload new file and add URL to final array
                     const response = await this.imageService.uploadImage(img).toPromise();
-                    finalImages.push(response?.path || response?.url || "");
+                    return response?.path || response?.url || "";
                 } else if (typeof img === 'string' && !deleteImages.includes(img)) {
-                    // Keep existing URL if not deleted
-                    finalImages.push(img);
+                    return img;
                 }
-            }
+                return null;
+            }));
+            productCopy.images = results.filter(Boolean) as string[];
         }
-        productCopy.images = finalImages;
 
-        // Upload variation images if present
+        // Upload variation images in parallel
         if (editedProduct.variants && Array.isArray(editedProduct.variants)) {
-            productCopy.variants = [];
-            for (const variant of editedProduct.variants) {
+            productCopy.variants = await Promise.all(editedProduct.variants.map(async (variant: any) => {
                 const vCopy: any = { ...variant };
                 if (vCopy.variationImage instanceof File) {
                     const resp = await this.imageService.uploadImage(vCopy.variationImage).toPromise();
                     vCopy.variationImage = resp?.path || resp?.url;
                 }
-                productCopy.variants.push(vCopy);
-            }
+                return vCopy;
+            }));
         }
 
-        // Delete removed images from server
-        for (const imgUrl of deleteImages) {
-            if (typeof imgUrl === 'string' && imgUrl) {
+        // Delete removed images in parallel (best-effort)
+        await Promise.all(deleteImages
+            .filter((imgUrl: string) => typeof imgUrl === 'string' && imgUrl)
+            .map(async (imgUrl: string) => {
                 try {
                     await this.imageService.removeImage(imgUrl).toPromise();
                 } catch (_err) {
                     // Best-effort: continue even if deletion fails
                 }
-            }
-        }
+            }));
 
         // Clean up helper fields
         delete productCopy.newImages;
